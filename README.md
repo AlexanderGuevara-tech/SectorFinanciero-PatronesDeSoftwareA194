@@ -8,3 +8,9 @@ El sistema contempla la administración de **cuentas, transacciones, préstamos 
 
 También incorpora mecanismos para la **detección de fraude en tiempo real** y el **cumplimiento de procesos regulatorios KYC y AML**, buscando garantizar operaciones seguras, consistentes y trazables.
 
+## Documentación del proyecto
+
+- [Requisitos del MVP](REQUISITOS-MVP.md)
+- [Diseño de arquitectura y patrones](DISENO-ARQUITECTURA-PATRONES.md)
+- `Documentación Sistema Bancario Core.docx`
+- `Objetivos - Semana 2.docx`

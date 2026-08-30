@@ -1,0 +1,35 @@
+CORE Dashboard adapts project-owned Blade markup from the visual structure of:
+
+Windmill Dashboard HTML
+Source: https://github.com/estevanmaito/windmill-dashboard
+Pinned upstream commit: e05267588134ca2f4129087cc65a59c38a9c36b5
+License: MIT
+Copyright (c) 2020 Estevan Maito
+License text verified at:
+https://raw.githubusercontent.com/estevanmaito/windmill-dashboard/e05267588134ca2f4129087cc65a59c38a9c36b5/LICENSE
+
+No Windmill packages, compiled assets, fonts, icons, plugins, CDN resources, or third-party
+assets are redistributed by this project. The delivered shell uses only project-owned Blade,
+the existing bundled Instrument Sans font, and the existing Vite/Tailwind CSS pipeline.
+
+MIT License
+
+Copyright (c) 2020 Estevan Maito
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
