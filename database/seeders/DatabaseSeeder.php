@@ -22,8 +22,9 @@ class DatabaseSeeder extends Seeder
 
         $manageUsers = Permission::create(['name' => 'manage-users', 'description' => 'Gestionar usuarios y roles.']);
         $viewAccounts = Permission::create(['name' => 'view-accounts', 'description' => 'Consultar cuentas y movimientos.']);
+        $manageAccounts = Permission::create(['name' => 'manage-accounts', 'description' => 'Crear, bloquear y desbloquear cuentas.']);
 
-        $administrator->permissions()->sync([$manageUsers->id, $viewAccounts->id]);
+        $administrator->permissions()->sync([$manageUsers->id, $viewAccounts->id, $manageAccounts->id]);
         $customer->permissions()->sync([$viewAccounts->id]);
 
         User::factory()->create([

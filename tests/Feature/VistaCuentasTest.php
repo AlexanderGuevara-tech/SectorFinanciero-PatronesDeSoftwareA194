@@ -26,7 +26,7 @@ class VistaCuentasTest extends TestCase
         $response->assertForbidden()->assertDontSee('Catálogo de tipos de cuenta');
     }
 
-    public function test_usuarios_autorizados_ven_la_vista_de_referencia_de_cuentas(): void
+    public function test_usuarios_autorizados_ven_la_vista_de_cuentas(): void
     {
         $usuario = $this->usuarioConPermiso('view-accounts');
 
@@ -34,7 +34,6 @@ class VistaCuentasTest extends TestCase
 
         $response->assertOk()
             ->assertSee('Cuentas')
-            ->assertSee('Catálogo de tipos de cuenta')
             ->assertSee('No hay cuentas registradas todavía');
     }
 
@@ -55,18 +54,15 @@ class VistaCuentasTest extends TestCase
             ->assertDontSee('checking-extra');
     }
 
-    public function test_el_estado_vacio_no_afirma_cuentas_ni_metricas_financieras(): void
+    public function test_el_estado_vacio_muestra_mensaje_funcional(): void
     {
         $usuario = $this->usuarioConPermiso('view-accounts');
 
         $response = $this->actingAs($usuario)->get(route('accounts.index'));
 
-        $response->assertSee('La persistencia de cuentas todavía no está habilitada.')
-            ->assertSee('La información de esta página es de referencia y no representa cuentas reales.')
-            ->assertDontSee('Número de cuenta')
-            ->assertDontSee('Saldo')
-            ->assertDontSee('Transacciones')
-            ->assertDontSee('Total');
+        $response->assertSee('No hay cuentas registradas todavía')
+            ->assertSee('Crea una cuenta bancaria para comenzar a operar.')
+            ->assertDontSee('La persistencia de cuentas todavía no está habilitada.');
     }
 
     public function test_la_evidencia_del_singleton_muestra_la_identidad_real_del_contenedor(): void
@@ -100,7 +96,7 @@ class VistaCuentasTest extends TestCase
     {
         $usuario = User::factory()->create();
         $rol = Role::create(['name' => 'account-viewer-'.uniqid()]);
-        $permiso = Permission::create(['name' => $nombrePermiso]);
+        $permiso = Permission::firstOrCreate(['name' => $nombrePermiso], ['description' => $nombrePermiso]);
         $rol->permissions()->attach($permiso);
         $usuario->roles()->attach($rol);
 
