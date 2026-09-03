@@ -17,21 +17,36 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $administrator = Role::create(['name' => 'administrator', 'description' => 'Administra el sistema.']);
-        $customer = Role::create(['name' => 'customer', 'description' => 'Cliente bancario.']);
+        $administrator = Role::firstOrCreate(
+            ['name' => 'administrator'],
+            ['description' => 'Administra el sistema.']
+        );
+        $customer = Role::firstOrCreate(
+            ['name' => 'customer'],
+            ['description' => 'Cliente bancario.']
+        );
 
-        $manageUsers = Permission::create(['name' => 'manage-users', 'description' => 'Gestionar usuarios y roles.']);
-        $viewAccounts = Permission::create(['name' => 'view-accounts', 'description' => 'Consultar cuentas y movimientos.']);
-        $manageAccounts = Permission::create(['name' => 'manage-accounts', 'description' => 'Crear, bloquear y desbloquear cuentas.']);
+        $manageUsers = Permission::firstOrCreate(
+            ['name' => 'manage-users'],
+            ['description' => 'Gestionar usuarios y roles.']
+        );
+        $viewAccounts = Permission::firstOrCreate(
+            ['name' => 'view-accounts'],
+            ['description' => 'Consultar cuentas y movimientos.']
+        );
+        $manageAccounts = Permission::firstOrCreate(
+            ['name' => 'manage-accounts'],
+            ['description' => 'Crear, bloquear y desbloquear cuentas.']
+        );
 
         $administrator->permissions()->sync([$manageUsers->id, $viewAccounts->id, $manageAccounts->id]);
         $customer->permissions()->sync([$viewAccounts->id]);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $testUser = User::firstOrCreate(
+            ['email' => 'test@example.com'],
+            ['name' => 'Test User', 'password' => 'password']
+        );
 
-        User::query()->where('email', 'test@example.com')->firstOrFail()->roles()->attach($administrator);
+        $testUser->roles()->syncWithoutDetaching([$administrator->id]);
     }
 }
