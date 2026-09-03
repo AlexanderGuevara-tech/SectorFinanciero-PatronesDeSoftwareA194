@@ -11,9 +11,9 @@
         </div>
 
         @can('manage-users')
-            <p class="mt-8 rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-4 text-sm font-semibold text-indigo-900 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-100">
+            <a href="{{ route('admin.users.index') }}" class="mt-8 block rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-4 text-sm font-semibold text-indigo-900 hover:bg-indigo-100 focus:outline-2 focus:outline-offset-2 focus:outline-indigo-600 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-100 dark:hover:bg-indigo-950/70">
                 La administración de usuarios está disponible para vos.
-            </p>
+            </a>
         @endcan
 
         <section aria-labelledby="module-overview" class="mt-10">

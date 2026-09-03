@@ -30,6 +30,22 @@ class ControladorPanel extends Controller
                 'nombreRuta' => 'accounts.index',
                 'permiso' => 'view-accounts',
             ],
+            [
+                'identificador' => 'usuarios',
+                'etiqueta' => 'Usuarios',
+                'descripcion' => 'Gestión de usuarios del sistema',
+                'estado' => 'activo',
+                'nombreRuta' => 'admin.users.index',
+                'permiso' => 'manage-users',
+            ],
+            [
+                'identificador' => 'roles',
+                'etiqueta' => 'Roles',
+                'descripcion' => 'Gestión de roles y permisos',
+                'estado' => 'activo',
+                'nombreRuta' => 'admin.roles.index',
+                'permiso' => 'manage-users',
+            ],
         ];
 
         /** @var list<array{identificador: string, etiqueta: string, descripcion: string, estado: 'activo'|'planificado', nombreRuta: ?string, permiso: ?string}> $modulos */
