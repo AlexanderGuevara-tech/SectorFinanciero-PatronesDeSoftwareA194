@@ -14,11 +14,13 @@ class CatalogoTiposCuentaContenedorTest extends TestCase
         $primeraResolucion = $this->app->make(CatalogoTiposCuenta::class);
         $segundaResolucion = $this->app->make(CatalogoTiposCuenta::class);
 
+        // Afirma que se devuelve la misma instancia para ambas resoluciones.
         $this->assertSame($primeraResolucion, $segundaResolucion);
         $this->assertSame(
             ['savings', 'checking'],
             array_map(fn ($definicion): string => $definicion->identificador, $primeraResolucion->listar()),
         );
+        // Afirma que las definiciones devueltas son consistentes entre resoluciones.
         $this->assertSame($primeraResolucion->buscar('checking'), $segundaResolucion->buscar('checking'));
     }
 

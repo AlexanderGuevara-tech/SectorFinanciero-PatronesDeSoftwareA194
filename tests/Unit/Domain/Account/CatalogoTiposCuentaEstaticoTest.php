@@ -8,6 +8,9 @@ use PHPUnit\Framework\TestCase;
 
 class CatalogoTiposCuentaEstaticoTest extends TestCase
 {
+    /**
+     * Debería exponer exactamente los tipos de cuenta admitidos y sus metadatos.
+     */
     public function test_it_exposes_exactly_the_supported_account_types_and_metadata(): void
     {
         $catalogo = new CatalogoTiposCuentaEstatico;
@@ -33,6 +36,9 @@ class CatalogoTiposCuentaEstaticoTest extends TestCase
         }, []));
     }
 
+    /**
+     * Debería devolver definiciones estables para búsquedas conocidas.
+     */
     public function test_known_lookups_return_stable_definitions(): void
     {
         $catalogo = new CatalogoTiposCuentaEstatico;
@@ -46,6 +52,9 @@ class CatalogoTiposCuentaEstaticoTest extends TestCase
         $this->assertSame('Checking Account', $corriente?->nombreVisible);
     }
 
+    /**
+     * Debería devolver nulo para búsquedas desconocidas sin una definición de respaldo.
+     */
     public function test_unknown_lookup_returns_null_without_a_fallback_definition(): void
     {
         $catalogo = new CatalogoTiposCuentaEstatico;
@@ -57,6 +66,9 @@ class CatalogoTiposCuentaEstaticoTest extends TestCase
         ));
     }
 
+    /**
+     * Debería devolver definiciones inmutables para búsquedas conocidas y listados.
+     */
     public function test_returned_definitions_cannot_mutate_catalog_data(): void
     {
         $catalogo = new CatalogoTiposCuentaEstatico;
@@ -84,6 +96,9 @@ class CatalogoTiposCuentaEstaticoTest extends TestCase
         ));
     }
 
+    /**
+     * Debería exponer metadatos de referencia sin operaciones financieras ni estado.
+     */
     public function test_catalog_exposes_reference_metadata_without_financial_operations_or_state(): void
     {
         $catalogo = new CatalogoTiposCuentaEstatico;
