@@ -9,10 +9,10 @@ interface RepositorioCuentas
     public function porId(int $id): ?Cuenta;
 
     /** @return list<Cuenta> */
-    public function porUsuario(int $userId): array;
+    public function porCliente(int $customerId): array;
 
     /** @return list<Cuenta> */
     public function todos(): array;
 
-    public function porIdYPropietario(int $id, int $userId): ?Cuenta;
+    public function porIdYCliente(int $id, int $customerId): ?Cuenta;
 }

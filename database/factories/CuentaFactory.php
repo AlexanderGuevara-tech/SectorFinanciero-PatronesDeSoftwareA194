@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Infrastructure\Persistence\Cliente;
 use App\Infrastructure\Persistence\Cuenta;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -23,7 +24,8 @@ class CuentaFactory extends Factory
             'moneda' => 'COP',
             'estado' => 'activa',
             'tipo' => 'savings',
-            'user_id' => User::factory(),
+            'customer_id' => Cliente::factory(),
+            'operado_por' => User::factory(),
         ];
     }
 }

@@ -11,12 +11,12 @@ final class BloquearCuenta
         private RepositorioCuentas $repositorio,
     ) {}
 
-    public function ejecutar(int $cuentaId, int $userId): Cuenta
+    public function ejecutar(int $cuentaId, int $customerId): Cuenta
     {
-        $cuenta = $this->repositorio->porId($cuentaId);
+        $cuenta = $this->repositorio->porIdYCliente($cuentaId, $customerId);
 
-        if ($cuenta === null || $cuenta->userId() !== $userId) {
-            throw new \InvalidArgumentException('Account not found for this owner.');
+        if ($cuenta === null) {
+            throw new \InvalidArgumentException('Account not found for this customer.');
         }
 
         $cuenta->bloquear();

@@ -4,8 +4,9 @@ namespace Tests\Feature;
 
 use App\Application\Account\AbrirCuenta;
 use App\Domain\Account\Cuenta;
-use App\Domain\Account\FabricaDeCuentas;
+use App\Domain\Account\FabricaPaquetesCuentas;
 use App\Domain\Account\RepositorioCuentas;
+use App\Infrastructure\Persistence\Cliente;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -40,9 +41,10 @@ class EmptyStateCopyTest extends TestCase
     public function test_con_cuentas_persistidas_se_muestra_lista(): void
     {
         $usuario = $this->usuarioConPermiso('view-accounts');
-        $this->abrirCuenta($usuario->id, 'savings');
+        $cliente = Cliente::factory()->create();
+        $this->abrirCuenta($cliente->id, $usuario->id, 'savings');
 
-        $response = $this->actingAs($usuario)->get(route('accounts.index'));
+        $response = $this->actingAs($usuario)->get(route('accounts.index', ['cliente' => $cliente->id]));
 
         $response->assertOk()
             ->assertDontSee('No hay cuentas registradas todavía')
@@ -61,13 +63,13 @@ class EmptyStateCopyTest extends TestCase
         return $usuario;
     }
 
-    private function abrirCuenta(int $userId, string $tipo = 'savings'): Cuenta
+    private function abrirCuenta(int $customerId, int $operadoPorId, string $tipo = 'savings'): Cuenta
     {
         $useCase = new AbrirCuenta(
-            fabrica: app(FabricaDeCuentas::class),
+            fabrica: app(FabricaPaquetesCuentas::class),
             repositorio: app(RepositorioCuentas::class),
         );
 
-        return $useCase->ejecutar(tipo: $tipo, userId: $userId);
+        return $useCase->ejecutar(tipo: $tipo, customerId: $customerId, operadoPorId: $operadoPorId);
     }
 }

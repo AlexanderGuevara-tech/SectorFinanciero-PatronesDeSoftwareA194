@@ -14,10 +14,8 @@ final class ListarCuentas
     /**
      * @return list<Cuenta>
      */
-    public function ejecutar(int $userId, bool $esAdministrador): array
+    public function ejecutar(int $customerId): array
     {
-        return $esAdministrador
-            ? $this->repositorio->todos()
-            : $this->repositorio->porUsuario($userId);
+        return $this->repositorio->porCliente($customerId);
     }
 }

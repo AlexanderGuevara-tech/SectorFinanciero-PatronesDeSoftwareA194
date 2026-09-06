@@ -23,7 +23,7 @@ class SeederIdempotenciaTest extends TestCase
         $this->ejecutarSeeder();
         $this->ejecutarSeeder();
 
-        $this->assertTrue(true, 'db:seed does not crash on re-run');
+        $this->assertDatabaseHas('roles', ['name' => 'administrator']);
     }
 
     public function test_roles_no_se_duplican_al_reseedear(): void
@@ -71,11 +71,11 @@ class SeederIdempotenciaTest extends TestCase
         $adminRole = Role::where('name', 'administrator')->firstOrFail();
         $permissionNames = $adminRole->permissions->pluck('name')->sort()->values();
 
-        $this->assertCount(3, $adminRole->permissions, 'administrator role must have exactly 3 permissions');
+        $this->assertCount(4, $adminRole->permissions, 'administrator role must have exactly 4 permissions');
         $this->assertEqualsCanonicalizing(
-            ['manage-users', 'manage-accounts', 'view-accounts'],
+            ['manage-users', 'manage-accounts', 'manage-customers', 'view-accounts'],
             $permissionNames->toArray(),
-            'administrator must retain all three permissions'
+            'administrator must retain all four permissions'
         );
     }
 

@@ -13,11 +13,9 @@ final class ConsultarSaldo
     /**
      * @return array{saldo: string, moneda: string}
      */
-    public function ejecutar(int $cuentaId, int $userId, bool $esAdministrador = false): array
+    public function ejecutar(int $cuentaId, int $customerId): array
     {
-        $cuenta = $esAdministrador
-            ? $this->repositorio->porId($cuentaId)
-            : $this->repositorio->porIdYPropietario($cuentaId, $userId);
+        $cuenta = $this->repositorio->porIdYCliente($cuentaId, $customerId);
 
         if ($cuenta === null) {
             throw new \InvalidArgumentException('Account not found.');

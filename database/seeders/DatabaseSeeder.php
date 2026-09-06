@@ -38,8 +38,12 @@ class DatabaseSeeder extends Seeder
             ['name' => 'manage-accounts'],
             ['description' => 'Crear, bloquear y desbloquear cuentas.']
         );
+        $manageCustomers = Permission::firstOrCreate(
+            ['name' => 'manage-customers'],
+            ['description' => 'Crear y consultar clientes bancarios.']
+        );
 
-        $administrator->permissions()->sync([$manageUsers->id, $viewAccounts->id, $manageAccounts->id]);
+        $administrator->permissions()->sync([$manageUsers->id, $viewAccounts->id, $manageAccounts->id, $manageCustomers->id]);
         $customer->permissions()->sync([$viewAccounts->id]);
 
         $testUser = User::firstOrCreate(

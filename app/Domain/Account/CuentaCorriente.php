@@ -6,6 +6,18 @@ final class CuentaCorriente implements CuentaProducto
 {
     private const SOBREGIRO_LIMITE = '1000.00';
 
+    public function __construct(private string $identificadorFamilia = 'personal') {}
+
+    public function familia(): string
+    {
+        return $this->identificadorFamilia;
+    }
+
+    public function conFamilia(string $familia): self
+    {
+        return new self($familia);
+    }
+
     public function permiteSobregiro(): bool
     {
         return true;

@@ -3,43 +3,50 @@
 namespace App\Application\Account;
 
 use App\Domain\Account\Cuenta;
-use App\Domain\Account\CuentaProducto;
 use App\Domain\Account\EstadoCuenta;
-use App\Domain\Account\FabricaDeCuentas;
+use App\Domain\Account\FabricaPaquetesCuentas;
 use App\Domain\Account\Moneda;
+use App\Domain\Account\PaqueteCuenta;
 use App\Domain\Account\RepositorioCuentas;
+use Illuminate\Support\Facades\Gate;
 
 final class AbrirCuenta
 {
     public function __construct(
-        private FabricaDeCuentas $fabrica,
+        private FabricaPaquetesCuentas $fabrica,
         private RepositorioCuentas $repositorio,
     ) {}
 
-    public function ejecutar(string $tipo, int $userId): Cuenta
+    public function ejecutar(string $tipo, int $customerId, int $operadoPorId, string $familia = 'personal'): Cuenta
     {
-        $producto = $this->fabrica->crear($tipo);
-
-        if ($producto === null) {
-            throw new \InvalidArgumentException("Unknown account type: {$tipo}");
+        if (auth()->check()) {
+            Gate::authorize('manage-accounts');
         }
 
-        $cuenta = $this->nuevaCuenta($tipo, $userId, $producto);
+        if ($customerId < 1) {
+            throw new \InvalidArgumentException('A customer is required.');
+        }
+
+        $paquete = $this->fabrica->crear($familia, $tipo);
+        $cuenta = $this->nuevaCuenta($tipo, $customerId, $operadoPorId, $paquete);
 
         $this->repositorio->guardar($cuenta);
 
         return $cuenta;
     }
 
-    private function nuevaCuenta(string $tipo, int $userId, CuentaProducto $producto): Cuenta
+    private function nuevaCuenta(string $tipo, int $customerId, int $operadoPorId, PaqueteCuenta $paquete): Cuenta
     {
         return new Cuenta(
             saldo: '0',
             moneda: Moneda::COP(),
             estado: EstadoCuenta::Activa,
             tipo: $tipo,
-            userId: $userId,
-            producto: $producto,
+            customerId: $customerId,
+            operadoPorId: $operadoPorId,
+            producto: $paquete->cuenta,
+            familia: $paquete->familia,
+            paquete: $paquete,
         );
     }
 }

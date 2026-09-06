@@ -4,8 +4,9 @@ namespace Tests\Feature;
 
 use App\Application\Account\AbrirCuenta;
 use App\Application\Account\ConsultarSaldo;
-use App\Domain\Account\FabricaDeCuentas;
+use App\Domain\Account\FabricaPaquetesCuentas;
 use App\Domain\Account\RepositorioCuentas;
+use App\Infrastructure\Persistence\Cliente;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -24,17 +25,18 @@ class ConsultarSaldoTest extends TestCase
         $this->artisan('migrate');
 
         $user = User::factory()->create();
+        $customer = Cliente::factory()->create();
 
         $abrir = new AbrirCuenta(
-            fabrica: app(FabricaDeCuentas::class),
+            fabrica: app(FabricaPaquetesCuentas::class),
             repositorio: app(RepositorioCuentas::class),
         );
-        $cuenta = $abrir->ejecutar(tipo: 'savings', userId: $user->id);
+        $cuenta = $abrir->ejecutar(tipo: 'savings', customerId: $customer->id, operadoPorId: $user->id);
 
         $consultar = new ConsultarSaldo(
             repositorio: app(RepositorioCuentas::class),
         );
-        $resultado = $consultar->ejecutar(cuentaId: $cuenta->id(), userId: $user->id);
+        $resultado = $consultar->ejecutar(cuentaId: $cuenta->id(), customerId: $customer->id);
 
         $this->assertArrayHasKey('saldo', $resultado);
         $this->assertArrayHasKey('moneda', $resultado);
@@ -52,17 +54,18 @@ class ConsultarSaldoTest extends TestCase
         $this->artisan('migrate');
 
         $user = User::factory()->create();
+        $customer = Cliente::factory()->create();
 
         $abrir = new AbrirCuenta(
-            fabrica: app(FabricaDeCuentas::class),
+            fabrica: app(FabricaPaquetesCuentas::class),
             repositorio: app(RepositorioCuentas::class),
         );
-        $cuenta = $abrir->ejecutar(tipo: 'checking', userId: $user->id);
+        $cuenta = $abrir->ejecutar(tipo: 'checking', customerId: $customer->id, operadoPorId: $user->id);
 
         $consultar = new ConsultarSaldo(
             repositorio: app(RepositorioCuentas::class),
         );
-        $resultado = $consultar->ejecutar(cuentaId: $cuenta->id(), userId: $user->id);
+        $resultado = $consultar->ejecutar(cuentaId: $cuenta->id(), customerId: $customer->id);
 
         $this->assertIsString($resultado['saldo']);
         $this->assertSame('0.00', $resultado['saldo']);

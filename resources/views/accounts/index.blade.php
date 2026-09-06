@@ -29,6 +29,10 @@
                             </div>
                             <dl class="mt-4 grid gap-3 text-sm">
                                 <div class="flex justify-between">
+                                    <dt class="text-slate-500 dark:text-slate-400">Cliente</dt>
+                                    <dd class="font-semibold text-slate-900 dark:text-slate-100">{{ $cuenta->cliente()?->nombre() ?? 'Sin cliente' }}</dd>
+                                </div>
+                                <div class="flex justify-between">
                                     <dt class="text-slate-500 dark:text-slate-400">Saldo</dt>
                                     <dd class="font-mono font-semibold text-slate-900 dark:text-slate-100">{{ $cuenta->moneda()->codigo() }} {{ $cuenta->saldo() }}</dd>
                                 </div>
@@ -58,6 +62,15 @@
                                 @endforeach
                             </select>
                         </div>
+                        <div class="flex-1">
+                            <label for="customer_id" class="block text-sm font-semibold text-indigo-900 dark:text-indigo-200">Cliente</label>
+                            <select id="customer_id" name="customer_id" class="mt-2 block w-full rounded-lg border border-indigo-300 bg-white px-3 py-2 text-sm dark:border-indigo-700 dark:bg-slate-800">
+                                <option value="">Crear cliente nuevo abajo</option>
+                                @foreach ($clientes as $cliente)
+                                    <option value="{{ $cliente->id() }}">{{ $cliente->nombre() }} — {{ $cliente->tipoDocumento() }} {{ $cliente->numeroDocumento() }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                         <button type="submit" class="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus:outline-2 focus:outline-offset-2 focus:outline-indigo-600">
                             Abrir cuenta
                         </button>
@@ -65,6 +78,13 @@
                     @error('tipo')
                         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
+                    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                        <input name="name" placeholder="Nombre del nuevo cliente" class="rounded-lg border border-indigo-300 px-3 py-2 text-sm">
+                        <select name="doc_type" class="rounded-lg border border-indigo-300 px-3 py-2 text-sm"><option>DNI</option><option>CC</option><option>RIF</option></select>
+                        <input name="doc_number" placeholder="Número de documento" class="rounded-lg border border-indigo-300 px-3 py-2 text-sm">
+                        <input name="email" type="email" placeholder="Correo (opcional)" class="rounded-lg border border-indigo-300 px-3 py-2 text-sm">
+                        <input name="phone" placeholder="Teléfono (opcional)" class="rounded-lg border border-indigo-300 px-3 py-2 text-sm">
+                    </div>
                 </form>
             </section>
         @endif

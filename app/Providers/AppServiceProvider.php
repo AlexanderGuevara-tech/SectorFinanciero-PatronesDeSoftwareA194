@@ -6,7 +6,13 @@ use App\Domain\Account\CatalogoTiposCuenta;
 use App\Domain\Account\CatalogoTiposCuentaEstatico;
 use App\Domain\Account\FabricaDeCuentas;
 use App\Domain\Account\FabricaDeCuentasPorCatalogo;
+use App\Domain\Account\FabricaPaqueteEmpresarial;
+use App\Domain\Account\FabricaPaquetePersonal;
+use App\Domain\Account\FabricaPaquetesCuentas;
+use App\Domain\Account\FabricaPaquetesCuentasPorFamilia;
 use App\Domain\Account\RepositorioCuentas;
+use App\Domain\Customer\RepositorioClientes;
+use App\Infrastructure\Persistence\RepositorioClientesEloquent;
 use App\Infrastructure\Persistence\RepositorioCuentasEloquent;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
@@ -21,7 +27,16 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(CatalogoTiposCuenta::class, CatalogoTiposCuentaEstatico::class);
         $this->app->bind(FabricaDeCuentas::class, FabricaDeCuentasPorCatalogo::class);
+        $this->app->bind(FabricaPaquetesCuentas::class, function ($app): FabricaPaquetesCuentas {
+            $fabrica = $app->make(FabricaDeCuentas::class);
+
+            return new FabricaPaquetesCuentasPorFamilia([
+                new FabricaPaquetePersonal($fabrica),
+                new FabricaPaqueteEmpresarial($fabrica),
+            ]);
+        });
         $this->app->bind(RepositorioCuentas::class, RepositorioCuentasEloquent::class);
+        $this->app->bind(RepositorioClientes::class, RepositorioClientesEloquent::class);
     }
 
     /**
@@ -32,5 +47,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('manage-users', fn (User $user): bool => $user->hasPermission('manage-users'));
         Gate::define('view-accounts', fn (User $user): bool => $user->hasPermission('view-accounts'));
         Gate::define('manage-accounts', fn (User $user): bool => $user->hasPermission('manage-accounts'));
+        Gate::define('manage-customers', fn (User $user): bool => $user->hasPermission('manage-customers'));
     }
 }

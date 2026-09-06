@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ControladorAutenticacion;
+use App\Http\Controllers\ControladorClientes;
 use App\Http\Controllers\ControladorCuentas;
 use App\Http\Controllers\ControladorPanel;
 use App\Http\Controllers\ControladorRoles;
@@ -42,6 +43,11 @@ Route::middleware('auth')->group(function (): void {
         Route::get('/admin/roles/{role}/editar', [ControladorRoles::class, 'edit'])->name('admin.roles.edit');
         Route::put('/admin/roles/{role}', [ControladorRoles::class, 'update'])->name('admin.roles.update');
         Route::delete('/admin/roles/{role}', [ControladorRoles::class, 'destroy'])->name('admin.roles.destroy');
+    });
+
+    Route::middleware('can:manage-customers')->group(function (): void {
+        Route::get('/admin/clientes', [ControladorClientes::class, 'index'])->name('admin.clientes.index');
+        Route::post('/admin/clientes', [ControladorClientes::class, 'store'])->name('admin.clientes.store');
     });
 
     Route::post('/logout', [ControladorAutenticacion::class, 'destroy'])->name('logout');

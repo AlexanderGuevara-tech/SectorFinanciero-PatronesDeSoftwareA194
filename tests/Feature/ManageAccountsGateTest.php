@@ -4,8 +4,9 @@ namespace Tests\Feature;
 
 use App\Application\Account\AbrirCuenta;
 use App\Domain\Account\Cuenta;
-use App\Domain\Account\FabricaDeCuentas;
+use App\Domain\Account\FabricaPaquetesCuentas;
 use App\Domain\Account\RepositorioCuentas;
+use App\Infrastructure\Persistence\Cliente;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -21,14 +22,17 @@ class ManageAccountsGateTest extends TestCase
         $this->artisan('migrate');
 
         $usuario = $this->usuarioConPermiso('manage-accounts');
+        $cliente = Cliente::factory()->create();
 
         $response = $this->actingAs($usuario)->post(route('accounts.store'), [
             'tipo' => 'savings',
+            'customer_id' => $cliente->id,
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('accounts', [
-            'user_id' => $usuario->id,
+            'customer_id' => $cliente->id,
+            'operado_por' => $usuario->id,
             'tipo' => 'savings',
         ]);
     }
@@ -41,6 +45,23 @@ class ManageAccountsGateTest extends TestCase
 
         $response = $this->actingAs($usuario)->post(route('accounts.store'), [
             'tipo' => 'savings',
+        ]);
+
+        $response->assertForbidden();
+        $this->assertDatabaseCount('accounts', 0);
+    }
+
+    public function test_usuario_sin_manage_accounts_es_denegado_para_cualquier_familia(): void
+    {
+        $this->artisan('migrate');
+
+        $usuario = $this->usuarioConPermiso('view-accounts');
+        $cliente = Cliente::factory()->create();
+
+        $response = $this->actingAs($usuario)->post(route('accounts.store'), [
+            'tipo' => 'checking',
+            'familia' => 'empresarial',
+            'customer_id' => $cliente->id,
         ]);
 
         $response->assertForbidden();
@@ -125,14 +146,16 @@ class ManageAccountsGateTest extends TestCase
         return $usuario;
     }
 
-    private function abrirCuenta(int $userId, string $tipo = 'savings'): Cuenta
+    private function abrirCuenta(int $operadoPorId, string $tipo = 'savings'): Cuenta
     {
         $useCase = new AbrirCuenta(
-            fabrica: app(FabricaDeCuentas::class),
+            fabrica: app(FabricaPaquetesCuentas::class),
             repositorio: app(RepositorioCuentas::class),
         );
 
-        return $useCase->ejecutar(tipo: $tipo, userId: $userId);
+        $cliente = Cliente::factory()->create();
+
+        return $useCase->ejecutar(tipo: $tipo, customerId: $cliente->id, operadoPorId: $operadoPorId);
     }
 
     private function repositorio(): RepositorioCuentas

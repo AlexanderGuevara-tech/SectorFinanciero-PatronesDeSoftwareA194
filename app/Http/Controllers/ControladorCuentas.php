@@ -9,6 +9,8 @@ use App\Application\Account\DesbloquearCuenta;
 use App\Application\Account\ListarCuentas;
 use App\Domain\Account\CatalogoTiposCuenta;
 use App\Domain\Account\DefinicionTipoCuenta;
+use App\Domain\Account\RepositorioCuentas;
+use App\Domain\Customer\RepositorioClientes;
 use App\Http\Requests\PeticionAbrirCuenta;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -22,14 +24,16 @@ class ControladorCuentas extends Controller
         private ConsultarSaldo $consultarSaldo,
         private BloquearCuenta $bloquearCuenta,
         private DesbloquearCuenta $desbloquearCuenta,
+        private RepositorioCuentas $repositorioCuentas,
+        private RepositorioClientes $repositorioClientes,
     ) {}
 
     public function index(CatalogoTiposCuenta $catalogo): View
     {
         /** @var User $usuario */
         $usuario = auth()->user();
-        $esAdministrador = $usuario->hasRole('administrator');
-        $cuentas = $this->listarCuentas->ejecutar(userId: $usuario->id, esAdministrador: $esAdministrador);
+        $customerId = (int) request()->query('cliente', 0);
+        $cuentas = $customerId > 0 ? $this->listarCuentas->ejecutar($customerId) : [];
 
         /** @var list<array{identificador: string, etiqueta: string, monedasElegibles: list<string>, politicaSobregiro: string}> $tiposCuenta */
         $tiposCuenta = array_map(
@@ -83,6 +87,8 @@ class ControladorCuentas extends Controller
         return view('accounts.index', [
             'navegacion' => $navegacion,
             'cuentas' => $cuentas,
+            'clientes' => $this->repositorioClientes->todos(),
+            'clienteSeleccionado' => $customerId,
             'tiposCuenta' => $tiposCuenta,
             'evidenciaSingleton' => $evidenciaSingleton,
             'usuario' => $usuario->load('roles'),
@@ -94,7 +100,9 @@ class ControladorCuentas extends Controller
     {
         $cuenta = $this->abrirCuenta->ejecutar(
             tipo: $request->validated('tipo'),
-            userId: auth()->id(),
+            customerId: $request->validated('customer_id'),
+            operadoPorId: auth()->id(),
+            familia: $request->validated('familia'),
         );
 
         return redirect()->route('accounts.show', $cuenta->id())->with('exito', 'Cuenta abierta correctamente.');
@@ -104,18 +112,22 @@ class ControladorCuentas extends Controller
     {
         /** @var User $usuario */
         $usuario = auth()->user();
-        $esAdministrador = $usuario->hasRole('administrator');
+        $cuenta = $this->repositorioCuentas->porId($account);
+
+        if ($cuenta === null) {
+            abort(404);
+        }
 
         $cuenta = $this->consultarSaldo->ejecutar(
             cuentaId: $account,
-            userId: $usuario->id,
-            esAdministrador: $esAdministrador,
+            customerId: $cuenta->customerId(),
         );
 
         return view('accounts.show', [
             'cuentaId' => $account,
             'saldo' => $cuenta['saldo'],
             'moneda' => $cuenta['moneda'],
+            'clienteNombre' => $this->repositorioCuentas->porId($account)?->cliente()?->nombre() ?? 'Sin cliente',
             'usuario' => $usuario->load('roles'),
             'navegacion' => $this->navegacionBasica(),
         ]);
@@ -125,7 +137,7 @@ class ControladorCuentas extends Controller
     {
         $this->bloquearCuenta->ejecutar(
             cuentaId: $account,
-            userId: auth()->id(),
+            customerId: $this->customerIdFor($account),
         );
 
         return redirect()->route('accounts.show', $account)->with('exito', 'Cuenta bloqueada correctamente.');
@@ -135,7 +147,7 @@ class ControladorCuentas extends Controller
     {
         $this->desbloquearCuenta->ejecutar(
             cuentaId: $account,
-            userId: auth()->id(),
+            customerId: $this->customerIdFor($account),
         );
 
         return redirect()->route('accounts.show', $account)->with('exito', 'Cuenta desbloqueada correctamente.');
@@ -180,5 +192,12 @@ class ControladorCuentas extends Controller
                 'permiso' => 'manage-users',
             ],
         ];
+    }
+
+    private function customerIdFor(int $account): int
+    {
+        $cuenta = $this->repositorioCuentas->porId($account);
+
+        return $cuenta?->customerId() ?? abort(404);
     }
 }

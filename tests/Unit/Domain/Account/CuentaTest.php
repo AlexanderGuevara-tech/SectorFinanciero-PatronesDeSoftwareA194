@@ -7,6 +7,9 @@ use App\Domain\Account\CuentaAhorro;
 use App\Domain\Account\CuentaCorriente;
 use App\Domain\Account\EstadoCuenta;
 use App\Domain\Account\Moneda;
+use App\Domain\Account\PaqueteCuenta;
+use App\Domain\Account\PoliticaComisionPorFamilia;
+use App\Domain\Account\PoliticaSobregiroPorFamilia;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -23,7 +26,8 @@ class CuentaTest extends TestCase
             moneda: Moneda::COP(),
             estado: EstadoCuenta::Activa,
             tipo: 'savings',
-            userId: 1,
+            customerId: 1,
+            operadoPorId: 2,
             producto: new CuentaAhorro,
         );
 
@@ -31,7 +35,7 @@ class CuentaTest extends TestCase
         $this->assertSame('COP', $cuenta->moneda()->codigo());
         $this->assertSame(EstadoCuenta::Activa, $cuenta->estado());
         $this->assertSame('savings', $cuenta->tipo());
-        $this->assertSame(1, $cuenta->userId());
+        $this->assertSame(1, $cuenta->customerId());
     }
 
     /**
@@ -47,7 +51,8 @@ class CuentaTest extends TestCase
             moneda: Moneda::COP(),
             estado: EstadoCuenta::Activa,
             tipo: 'savings',
-            userId: 1,
+            customerId: 1,
+            operadoPorId: 2,
             producto: new CuentaAhorro,
         );
 
@@ -65,7 +70,8 @@ class CuentaTest extends TestCase
             moneda: Moneda::COP(),
             estado: EstadoCuenta::Activa,
             tipo: 'savings',
-            userId: 1,
+            customerId: 1,
+            operadoPorId: 2,
             producto: new CuentaAhorro,
         );
 
@@ -85,7 +91,8 @@ class CuentaTest extends TestCase
             moneda: Moneda::COP(),
             estado: EstadoCuenta::Activa,
             tipo: 'checking',
-            userId: 1,
+            customerId: 1,
+            operadoPorId: 2,
             producto: new CuentaCorriente,
         );
 
@@ -107,7 +114,8 @@ class CuentaTest extends TestCase
             moneda: Moneda::COP(),
             estado: EstadoCuenta::Activa,
             tipo: 'checking',
-            userId: 1,
+            customerId: 1,
+            operadoPorId: 2,
             producto: new CuentaCorriente,
         );
 
@@ -125,12 +133,57 @@ class CuentaTest extends TestCase
             moneda: Moneda::COP(),
             estado: EstadoCuenta::Activa,
             tipo: 'checking',
-            userId: 1,
+            customerId: 1,
+            operadoPorId: 2,
             producto: new CuentaCorriente,
         );
 
         $this->assertIsString($cuenta->saldo());
         $this->assertSame('1500.50', $cuenta->saldo());
+    }
+
+    #[Test]
+    public function test_carries_the_selected_family_package(): void
+    {
+        $producto = new CuentaCorriente('empresarial');
+        $paquete = new PaqueteCuenta(
+            familia: 'empresarial',
+            cuenta: $producto,
+            comision: new PoliticaComisionPorFamilia('empresarial'),
+            sobregiro: new PoliticaSobregiroPorFamilia('empresarial'),
+        );
+
+        $cuenta = new Cuenta(
+            saldo: '0',
+            moneda: Moneda::COP(),
+            estado: EstadoCuenta::Activa,
+            tipo: 'checking',
+            customerId: 1,
+            operadoPorId: 2,
+            producto: $producto,
+            familia: 'empresarial',
+            paquete: $paquete,
+        );
+
+        $this->assertSame('empresarial', $cuenta->familia());
+        $this->assertSame($paquete, $cuenta->paquete());
+    }
+
+    #[Test]
+    public function test_legacy_constructor_defaults_to_personal_family(): void
+    {
+        $cuenta = new Cuenta(
+            saldo: '0',
+            moneda: Moneda::COP(),
+            estado: EstadoCuenta::Activa,
+            tipo: 'savings',
+            customerId: 1,
+            operadoPorId: 2,
+            producto: new CuentaAhorro,
+        );
+
+        $this->assertSame('personal', $cuenta->familia());
+        $this->assertSame('personal', $cuenta->paquete()->familia);
     }
 
     /**
@@ -144,7 +197,8 @@ class CuentaTest extends TestCase
             moneda: Moneda::COP(),
             estado: EstadoCuenta::Activa,
             tipo: 'savings',
-            userId: 1,
+            customerId: 1,
+            operadoPorId: 2,
             producto: new CuentaAhorro,
         );
 
@@ -165,7 +219,8 @@ class CuentaTest extends TestCase
             moneda: Moneda::COP(),
             estado: EstadoCuenta::Bloqueada,
             tipo: 'savings',
-            userId: 1,
+            customerId: 1,
+            operadoPorId: 2,
             producto: new CuentaAhorro,
         );
 

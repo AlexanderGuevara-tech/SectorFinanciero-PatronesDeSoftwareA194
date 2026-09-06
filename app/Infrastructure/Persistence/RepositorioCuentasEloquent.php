@@ -3,15 +3,16 @@
 namespace App\Infrastructure\Persistence;
 
 use App\Domain\Account\Cuenta as CuentaDominio;
-use App\Domain\Account\CuentaAhorro;
-use App\Domain\Account\CuentaCorriente;
-use App\Domain\Account\CuentaProducto;
 use App\Domain\Account\EstadoCuenta;
+use App\Domain\Account\FabricaPaquetesCuentas;
 use App\Domain\Account\Moneda;
 use App\Domain\Account\RepositorioCuentas;
+use App\Domain\Customer\Cliente as ClienteDominio;
 
 final class RepositorioCuentasEloquent implements RepositorioCuentas
 {
+    public function __construct(private FabricaPaquetesCuentas $fabricaPaquetes) {}
+
     public function guardar(CuentaDominio $cuenta): void
     {
         $modelo = ($cuenta->id() === null)
@@ -22,7 +23,9 @@ final class RepositorioCuentasEloquent implements RepositorioCuentas
         $modelo->moneda = $cuenta->moneda()->codigo();
         $modelo->estado = $cuenta->estado()->value;
         $modelo->tipo = $cuenta->tipo();
-        $modelo->user_id = $cuenta->userId();
+        $modelo->familia = $cuenta->familia();
+        $modelo->customer_id = $cuenta->customerId();
+        $modelo->operado_por = $cuenta->operadoPorId();
 
         $modelo->save();
 
@@ -33,24 +36,24 @@ final class RepositorioCuentasEloquent implements RepositorioCuentas
 
     public function porId(int $id): ?CuentaDominio
     {
-        $modelo = Cuenta::query()->find($id);
+        $modelo = Cuenta::query()->with('cliente')->find($id);
 
         return $modelo === null ? null : $this->mapear($modelo);
     }
 
-    public function porUsuario(int $userId): array
+    public function porCliente(int $customerId): array
     {
-        return $this->mapearMuchos(Cuenta::query()->where('user_id', $userId)->get());
+        return $this->mapearMuchos(Cuenta::query()->where('customer_id', $customerId)->with('cliente')->get());
     }
 
     public function todos(): array
     {
-        return $this->mapearMuchos(Cuenta::query()->get());
+        return $this->mapearMuchos(Cuenta::query()->with('cliente')->get());
     }
 
-    public function porIdYPropietario(int $id, int $userId): ?CuentaDominio
+    public function porIdYCliente(int $id, int $customerId): ?CuentaDominio
     {
-        $modelo = Cuenta::query()->where('id', $id)->where('user_id', $userId)->first();
+        $modelo = Cuenta::query()->where('id', $id)->where('customer_id', $customerId)->with('cliente')->first();
 
         return $modelo === null ? null : $this->mapear($modelo);
     }
@@ -76,15 +79,16 @@ final class RepositorioCuentasEloquent implements RepositorioCuentas
             moneda: new Moneda($modelo->moneda),
             estado: EstadoCuenta::from($modelo->estado),
             tipo: $modelo->tipo,
-            userId: (int) $modelo->user_id,
-            producto: $this->producto($modelo->tipo),
+            customerId: (int) $modelo->customer_id,
+            operadoPorId: $modelo->operado_por === null ? null : (int) $modelo->operado_por,
+            producto: ($paquete = $this->fabricaPaquetes->crear($modelo->familia ?? 'personal', $modelo->tipo))->cuenta,
+            familia: $paquete->familia,
+            paquete: $paquete,
             id: (int) $modelo->id,
+            cliente: $modelo->relationLoaded('cliente') && $modelo->cliente !== null
+                ? new ClienteDominio($modelo->cliente->name, $modelo->cliente->doc_type, $modelo->cliente->doc_number, $modelo->cliente->email, $modelo->cliente->phone, (int) $modelo->cliente->id)
+                : null,
         );
-    }
-
-    private function producto(string $tipo): CuentaProducto
-    {
-        return $tipo === 'checking' ? new CuentaCorriente : new CuentaAhorro;
     }
 
     /**

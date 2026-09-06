@@ -21,7 +21,7 @@ class RepositorioCuentasTest extends TestCase
         $this->assertTrue($reflection->isInterface());
         $this->assertTrue($reflection->isAbstract());
 
-        $metodosEsperados = ['guardar', 'porId', 'porUsuario', 'todos', 'porIdYPropietario'];
+        $metodosEsperados = ['guardar', 'porId', 'porCliente', 'todos', 'porIdYCliente'];
         $metodosReales = array_map(
             fn (\ReflectionMethod $m): string => $m->getName(),
             $reflection->getMethods(),
@@ -45,7 +45,7 @@ class RepositorioCuentasTest extends TestCase
                 return null;
             }
 
-            public function porUsuario(int $userId): array
+            public function porCliente(int $customerId): array
             {
                 return [];
             }
@@ -55,7 +55,7 @@ class RepositorioCuentasTest extends TestCase
                 return [];
             }
 
-            public function porIdYPropietario(int $id, int $userId): ?Cuenta
+            public function porIdYCliente(int $id, int $customerId): ?Cuenta
             {
                 return null;
             }

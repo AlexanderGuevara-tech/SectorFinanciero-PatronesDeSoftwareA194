@@ -16,6 +16,7 @@
         <section aria-labelledby="balance-heading" class="mt-10 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
             <h2 id="balance-heading" class="text-xl font-bold">Saldo</h2>
             <p class="mt-4 text-4xl font-mono font-bold text-slate-900 dark:text-slate-100">{{ $moneda }} {{ $saldo }}</p>
+            <p class="mt-3 text-slate-600 dark:text-slate-400">Cliente: {{ $clienteNombre }}</p>
         </section>
 
         @if ($usuario->can('manage-accounts'))

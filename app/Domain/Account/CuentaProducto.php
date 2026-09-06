@@ -4,6 +4,10 @@ namespace App\Domain\Account;
 
 interface CuentaProducto
 {
+    public function familia(): string;
+
+    public function conFamilia(string $familia): self;
+
     public function permiteSobregiro(): bool;
 
     /**

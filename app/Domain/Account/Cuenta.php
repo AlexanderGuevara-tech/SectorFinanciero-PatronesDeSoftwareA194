@@ -2,6 +2,8 @@
 
 namespace App\Domain\Account;
 
+use App\Domain\Customer\Cliente;
+
 final class Cuenta
 {
     public function __construct(
@@ -9,10 +11,27 @@ final class Cuenta
         private Moneda $moneda,
         private EstadoCuenta $estado,
         private string $tipo,
-        private int $userId,
+        private int $customerId,
+        private ?int $operadoPorId,
         private CuentaProducto $producto,
+        private string $familia = 'personal',
+        private ?PaqueteCuenta $paquete = null,
         private ?int $id = null,
-    ) {}
+        private ?Cliente $cliente = null,
+    ) {
+        if ($this->paquete === null) {
+            $this->paquete = new PaqueteCuenta(
+                familia: $this->familia,
+                cuenta: $this->producto,
+                comision: new PoliticaComisionPorFamilia($this->familia),
+                sobregiro: new PoliticaSobregiroPorFamilia($this->familia),
+            );
+        } else {
+            if ($this->paquete->familia !== $this->familia || $this->paquete->cuenta !== $this->producto) {
+                throw new \InvalidArgumentException('Account package does not match account family or product.');
+            }
+        }
+    }
 
     public function id(): ?int
     {
@@ -39,14 +58,34 @@ final class Cuenta
         return $this->tipo;
     }
 
-    public function userId(): int
+    public function customerId(): int
     {
-        return $this->userId;
+        return $this->customerId;
+    }
+
+    public function operadoPorId(): ?int
+    {
+        return $this->operadoPorId;
     }
 
     public function producto(): CuentaProducto
     {
         return $this->producto;
+    }
+
+    public function familia(): string
+    {
+        return $this->familia;
+    }
+
+    public function paquete(): PaqueteCuenta
+    {
+        return $this->paquete;
+    }
+
+    public function cliente(): ?Cliente
+    {
+        return $this->cliente;
     }
 
     /**

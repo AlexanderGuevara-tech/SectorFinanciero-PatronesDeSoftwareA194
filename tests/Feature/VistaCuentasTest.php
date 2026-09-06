@@ -2,8 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Application\Account\AbrirCuenta;
 use App\Domain\Account\CatalogoTiposCuenta;
 use App\Domain\Account\CatalogoTiposCuentaEstatico;
+use App\Domain\Account\Cuenta;
+use App\Domain\Account\FabricaPaquetesCuentas;
+use App\Domain\Account\RepositorioCuentas;
+use App\Infrastructure\Persistence\Cliente;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -92,12 +97,85 @@ class VistaCuentasTest extends TestCase
             ->assertSee('<main id="main-content"', false);
     }
 
+    public function test_el_indice_muestra_solo_las_cuentas_del_cliente_seleccionado_y_un_solo_nombre(): void
+    {
+        $usuario = $this->usuarioConPermiso('view-accounts');
+        $clienteSeleccionado = Cliente::factory()->create(['name' => 'Cliente Seleccionado']);
+        $otroCliente = Cliente::factory()->create(['name' => 'Otro Cliente']);
+        $this->abrirCuenta($clienteSeleccionado->id, $usuario->id);
+        $this->abrirCuenta($otroCliente->id, $usuario->id);
+
+        $response = $this->actingAs($usuario)->get(route('accounts.index', ['cliente' => $clienteSeleccionado->id]));
+        $contenido = (string) $response->getContent();
+
+        $response->assertOk()
+            ->assertSee('Cliente Seleccionado')
+            ->assertDontSee('Otro Cliente')
+            ->assertDontSee('Cuenta #'.$this->idDeCuenta($otroCliente->id));
+        self::assertSame(1, substr_count($contenido, 'Cliente Seleccionado'));
+    }
+
+    public function test_el_detalle_muestra_saldo_moneda_y_nombre_del_cliente(): void
+    {
+        $usuario = $this->usuarioConPermiso('view-accounts');
+        $cliente = Cliente::factory()->create(['name' => 'Cliente del Detalle']);
+        $cuenta = $this->abrirCuenta($cliente->id, $usuario->id);
+
+        $response = $this->actingAs($usuario)->get(route('accounts.show', $cuenta->id()));
+
+        $response->assertOk()
+            ->assertSee('COP 0.00')
+            ->assertSee('Cliente: Cliente del Detalle');
+    }
+
+    public function test_el_detalle_muestra_controles_para_quien_puede_gestionar(): void
+    {
+        $usuario = $this->usuarioConPermisos(['manage-accounts', 'view-accounts']);
+        $cliente = Cliente::factory()->create();
+        $cuenta = $this->abrirCuenta($cliente->id, $usuario->id);
+
+        $response = $this->actingAs($usuario)->get(route('accounts.show', $cuenta->id()));
+
+        $response->assertOk()->assertSee('Bloquear')->assertSee('Desbloquear');
+    }
+
+    private function abrirCuenta(int $customerId, int $operadoPorId): Cuenta
+    {
+        return (new AbrirCuenta(
+            fabrica: app(FabricaPaquetesCuentas::class),
+            repositorio: app(RepositorioCuentas::class),
+        ))->ejecutar(tipo: 'savings', customerId: $customerId, operadoPorId: $operadoPorId);
+    }
+
+    private function idDeCuenta(int $customerId): int
+    {
+        return app(RepositorioCuentas::class)->porCliente($customerId)[0]->id();
+    }
+
     private function usuarioConPermiso(string $nombrePermiso): User
     {
         $usuario = User::factory()->create();
         $rol = Role::create(['name' => 'account-viewer-'.uniqid()]);
         $permiso = Permission::firstOrCreate(['name' => $nombrePermiso], ['description' => $nombrePermiso]);
         $rol->permissions()->attach($permiso);
+        $usuario->roles()->attach($rol);
+
+        return $usuario;
+    }
+
+    /**
+     * @param  list<string>  $permisos
+     */
+    private function usuarioConPermisos(array $permisos): User
+    {
+        $usuario = User::factory()->create();
+        $rol = Role::create(['name' => 'account-viewer-'.uniqid()]);
+
+        foreach ($permisos as $nombrePermiso) {
+            $permiso = Permission::firstOrCreate(['name' => $nombrePermiso], ['description' => $nombrePermiso]);
+            $rol->permissions()->attach($permiso);
+        }
+
         $usuario->roles()->attach($rol);
 
         return $usuario;
