@@ -10,6 +10,7 @@ use App\Domain\Account\Moneda;
 use App\Domain\Account\PaqueteCuenta;
 use App\Domain\Account\PoliticaComisionPorFamilia;
 use App\Domain\Account\PoliticaSobregiroPorFamilia;
+use App\Domain\Customer\Cliente;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -228,5 +229,66 @@ class CuentaTest extends TestCase
 
         $this->assertSame(EstadoCuenta::Activa, $cuenta->estado());
         $this->assertTrue($cuenta->estado()->permiteEscritura());
+    }
+
+    #[Test]
+    public function test_clones_an_account_with_its_values_and_independent_mutable_state(): void
+    {
+        $producto = new CuentaCorriente('empresarial');
+        $cliente = new Cliente('Ada Lovelace', 'CC', '123', 'ada@example.com');
+        $cuenta = new Cuenta(
+            saldo: '125.50',
+            moneda: new Moneda('USD'),
+            estado: EstadoCuenta::Activa,
+            tipo: 'checking',
+            customerId: 7,
+            operadoPorId: 11,
+            producto: $producto,
+            familia: 'empresarial',
+            cliente: $cliente,
+        );
+
+        $cuenta->asignarId(19);
+        $clon = $cuenta->clonarParaNuevaCuenta();
+
+        $clon->aplicarSaldo('10.00');
+        $clon->bloquear();
+        $clon->cliente()?->asignarId(20);
+
+        $this->assertSame('125.50', $cuenta->saldo());
+        $this->assertSame('135.50', $clon->saldo());
+        $this->assertSame(EstadoCuenta::Activa, $cuenta->estado());
+        $this->assertSame(EstadoCuenta::Bloqueada, $clon->estado());
+        $this->assertSame('USD', $clon->moneda()->codigo());
+        $this->assertSame('checking', $clon->tipo());
+        $this->assertSame(7, $clon->customerId());
+        $this->assertSame(11, $clon->operadoPorId());
+        $this->assertSame('empresarial', $clon->familia());
+        $this->assertNotSame($cuenta->paquete(), $clon->paquete());
+        $this->assertNotSame($cuenta->producto(), $clon->producto());
+        $this->assertNotSame($cuenta->cliente(), $clon->cliente());
+        $this->assertSame(null, $cuenta->cliente()?->id());
+        $this->assertSame(20, $clon->cliente()?->id());
+    }
+
+    #[Test]
+    public function test_clones_an_account_without_reusing_its_identity(): void
+    {
+        $cuenta = new Cuenta(
+            saldo: '0',
+            moneda: Moneda::COP(),
+            estado: EstadoCuenta::Activa,
+            tipo: 'savings',
+            customerId: 1,
+            operadoPorId: null,
+            producto: new CuentaAhorro,
+        );
+
+        $cuenta->asignarId(19);
+        $clon = $cuenta->clonarParaNuevaCuenta();
+        $clon->asignarId(20);
+
+        $this->assertSame(19, $cuenta->id());
+        $this->assertSame(20, $clon->id());
     }
 }

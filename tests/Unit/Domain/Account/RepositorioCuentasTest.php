@@ -11,17 +11,17 @@ use ReflectionClass;
 class RepositorioCuentasTest extends TestCase
 {
     /**
-     * Debería ser un interfaz con exactamente los cinco métodos del contrato.
+     * The repository contract exposes exactly six methods.
      */
     #[Test]
-    public function test_is_an_interface_with_the_five_contract_methods(): void
+    public function test_is_an_interface_with_the_six_contract_methods(): void
     {
         $reflection = new ReflectionClass(RepositorioCuentas::class);
 
         $this->assertTrue($reflection->isInterface());
         $this->assertTrue($reflection->isAbstract());
 
-        $metodosEsperados = ['guardar', 'porId', 'porCliente', 'todos', 'porIdYCliente'];
+        $metodosEsperados = ['guardar', 'porId', 'porCliente', 'todos', 'porIdYCliente', 'porIdsBloqueadas'];
         $metodosReales = array_map(
             fn (\ReflectionMethod $m): string => $m->getName(),
             $reflection->getMethods(),
@@ -31,10 +31,10 @@ class RepositorioCuentasTest extends TestCase
     }
 
     /**
-     * Debería aceptar cualquier clase que implemente los cinco métodos.
+     * Any adapter implementing all six methods satisfies the repository contract.
      */
     #[Test]
-    public function test_accepts_any_class_implementing_the_five_methods(): void
+    public function test_accepts_any_class_implementing_the_six_methods(): void
     {
         $adapter = new class implements RepositorioCuentas
         {
@@ -58,6 +58,11 @@ class RepositorioCuentasTest extends TestCase
             public function porIdYCliente(int $id, int $customerId): ?Cuenta
             {
                 return null;
+            }
+
+            public function porIdsBloqueadas(array $ids): array
+            {
+                return [];
             }
         };
 

@@ -2,6 +2,12 @@
 
 namespace App\Providers;
 
+use App\Application\Account\AlcanceClientes;
+use App\Application\Account\PoliticaAutorizacion;
+use App\Application\Account\RepositorioIdempotencia;
+use App\Application\Account\RepositorioLedger;
+use App\Application\Account\RepositorioOperaciones;
+use App\Application\Account\UnidadDeTrabajo;
 use App\Domain\Account\CatalogoTiposCuenta;
 use App\Domain\Account\CatalogoTiposCuentaEstatico;
 use App\Domain\Account\FabricaDeCuentas;
@@ -12,8 +18,14 @@ use App\Domain\Account\FabricaPaquetesCuentas;
 use App\Domain\Account\FabricaPaquetesCuentasPorFamilia;
 use App\Domain\Account\RepositorioCuentas;
 use App\Domain\Customer\RepositorioClientes;
+use App\Infrastructure\Persistence\AlcanceClientesOperador;
+use App\Infrastructure\Persistence\PoliticaAutorizacionUsuario;
 use App\Infrastructure\Persistence\RepositorioClientesEloquent;
 use App\Infrastructure\Persistence\RepositorioCuentasEloquent;
+use App\Infrastructure\Persistence\RepositorioIdempotenciaEloquent;
+use App\Infrastructure\Persistence\RepositorioLedgerEloquent;
+use App\Infrastructure\Persistence\RepositorioOperacionesEloquent;
+use App\Infrastructure\Persistence\UnidadDeTrabajoEloquent;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -37,6 +49,12 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->bind(RepositorioCuentas::class, RepositorioCuentasEloquent::class);
         $this->app->bind(RepositorioClientes::class, RepositorioClientesEloquent::class);
+        $this->app->bind(PoliticaAutorizacion::class, PoliticaAutorizacionUsuario::class);
+        $this->app->bind(AlcanceClientes::class, AlcanceClientesOperador::class);
+        $this->app->bind(UnidadDeTrabajo::class, UnidadDeTrabajoEloquent::class);
+        $this->app->bind(RepositorioOperaciones::class, RepositorioOperacionesEloquent::class);
+        $this->app->bind(RepositorioLedger::class, RepositorioLedgerEloquent::class);
+        $this->app->bind(RepositorioIdempotencia::class, RepositorioIdempotenciaEloquent::class);
     }
 
     /**

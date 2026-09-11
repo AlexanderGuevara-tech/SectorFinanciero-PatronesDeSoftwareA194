@@ -89,6 +89,32 @@ final class Cuenta
     }
 
     /**
+     * Creates an independent account prototype ready to receive a new identity.
+     */
+    public function clonarParaNuevaCuenta(): self
+    {
+        $producto = clone $this->producto;
+
+        return new self(
+            saldo: $this->saldo,
+            moneda: $this->moneda,
+            estado: $this->estado,
+            tipo: $this->tipo,
+            customerId: $this->customerId,
+            operadoPorId: $this->operadoPorId,
+            producto: $producto,
+            familia: $this->familia,
+            paquete: new PaqueteCuenta(
+                familia: $this->paquete->familia,
+                cuenta: $producto,
+                comision: clone $this->paquete->comision,
+                sobregiro: clone $this->paquete->sobregiro,
+            ),
+            cliente: $this->cliente === null ? null : clone $this->cliente,
+        );
+    }
+
+    /**
      * @throws \InvalidArgumentException if the account's estado does not permit mutations.
      */
     public function aplicarSaldo(string $delta): void

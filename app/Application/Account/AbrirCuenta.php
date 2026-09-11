@@ -3,9 +3,8 @@
 namespace App\Application\Account;
 
 use App\Domain\Account\Cuenta;
-use App\Domain\Account\EstadoCuenta;
+use App\Domain\Account\CuentaBuilder;
 use App\Domain\Account\FabricaPaquetesCuentas;
-use App\Domain\Account\Moneda;
 use App\Domain\Account\PaqueteCuenta;
 use App\Domain\Account\RepositorioCuentas;
 use Illuminate\Support\Facades\Gate;
@@ -37,16 +36,13 @@ final class AbrirCuenta
 
     private function nuevaCuenta(string $tipo, int $customerId, int $operadoPorId, PaqueteCuenta $paquete): Cuenta
     {
-        return new Cuenta(
-            saldo: '0',
-            moneda: Moneda::COP(),
-            estado: EstadoCuenta::Activa,
-            tipo: $tipo,
-            customerId: $customerId,
-            operadoPorId: $operadoPorId,
-            producto: $paquete->cuenta,
-            familia: $paquete->familia,
-            paquete: $paquete,
-        );
+        return (new CuentaBuilder)
+            ->withType($tipo)
+            ->forCustomer($customerId)
+            ->operatedBy($operadoPorId)
+            ->withProduct($paquete->cuenta)
+            ->withFamily($paquete->familia)
+            ->withPackage($paquete)
+            ->build();
     }
 }

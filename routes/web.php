@@ -27,6 +27,8 @@ Route::middleware('auth')->group(function (): void {
         Route::post('/accounts', [ControladorCuentas::class, 'store'])->name('accounts.store');
         Route::post('/accounts/{account}/block', [ControladorCuentas::class, 'block'])->name('accounts.block');
         Route::post('/accounts/{account}/unblock', [ControladorCuentas::class, 'unblock'])->name('accounts.unblock');
+        Route::post('/accounts/transfer', [ControladorCuentas::class, 'transfer'])->name('accounts.transfer');
+        Route::post('/accounts/transactions/{transaction}/reverse', [ControladorCuentas::class, 'reverse'])->name('accounts.reverse');
     });
 
     Route::middleware('can:manage-users')->group(function (): void {

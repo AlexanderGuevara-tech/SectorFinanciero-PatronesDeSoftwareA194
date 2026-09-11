@@ -58,6 +58,25 @@ final class RepositorioCuentasEloquent implements RepositorioCuentas
         return $modelo === null ? null : $this->mapear($modelo);
     }
 
+    public function porIdsBloqueadas(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        sort($ids, SORT_NUMERIC);
+
+        return $this->mapearMuchos(
+            Cuenta::query()
+                ->whereIn('id', $ids)
+                ->with('cliente')
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+        );
+    }
+
     /**
      * @param  iterable<Cuenta>  $modelos
      * @return list<CuentaDominio>

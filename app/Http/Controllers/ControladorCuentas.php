@@ -7,11 +7,18 @@ use App\Application\Account\BloquearCuenta;
 use App\Application\Account\ConsultarSaldo;
 use App\Application\Account\DesbloquearCuenta;
 use App\Application\Account\ListarCuentas;
+use App\Application\Account\ReversarTransferencia;
+use App\Application\Account\ReversarTransferenciaDTO;
+use App\Application\Account\TipoFalloOperacion;
+use App\Application\Account\TransferirFondos;
+use App\Application\Account\TransferirFondosDTO;
 use App\Domain\Account\CatalogoTiposCuenta;
 use App\Domain\Account\DefinicionTipoCuenta;
 use App\Domain\Account\RepositorioCuentas;
 use App\Domain\Customer\RepositorioClientes;
 use App\Http\Requests\PeticionAbrirCuenta;
+use App\Http\Requests\PeticionReversarTransferencia;
+use App\Http\Requests\PeticionTransferirFondos;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -24,6 +31,8 @@ class ControladorCuentas extends Controller
         private ConsultarSaldo $consultarSaldo,
         private BloquearCuenta $bloquearCuenta,
         private DesbloquearCuenta $desbloquearCuenta,
+        private TransferirFondos $transferirFondos,
+        private ReversarTransferencia $reversarTransferencia,
         private RepositorioCuentas $repositorioCuentas,
         private RepositorioClientes $repositorioClientes,
     ) {}
@@ -151,6 +160,46 @@ class ControladorCuentas extends Controller
         );
 
         return redirect()->route('accounts.show', $account)->with('exito', 'Cuenta desbloqueada correctamente.');
+    }
+
+    public function transfer(PeticionTransferirFondos $request): RedirectResponse
+    {
+        $result = $this->transferirFondos->ejecutar(new TransferirFondosDTO(
+            actorId: (int) auth()->id(),
+            sourceAccountId: (int) $request->validated('source_account_id'),
+            destinationAccountId: (int) $request->validated('destination_account_id'),
+            currency: $request->validated('currency'),
+            amount: $request->validated('amount'),
+            requestKey: $request->validated('request_key'),
+        ));
+
+        if (! $result->isCommitted()) {
+            return back()->withErrors(['operation' => $this->failureMessage($result->failure)]);
+        }
+
+        return redirect()->route('accounts.show', $request->validated('source_account_id'))
+            ->with('exito', 'Transfer completed successfully.');
+    }
+
+    public function reverse(PeticionReversarTransferencia $request, int $transaction): RedirectResponse
+    {
+        $result = $this->reversarTransferencia->ejecutar(new ReversarTransferenciaDTO(
+            actorId: (int) auth()->id(),
+            transactionId: $transaction,
+            reason: $request->validated('reason'),
+            requestKey: $request->validated('request_key'),
+        ));
+
+        if (! $result->isCommitted()) {
+            return back()->withErrors(['operation' => $this->failureMessage($result->failure)]);
+        }
+
+        return back()->with('exito', 'Transfer reversed successfully.');
+    }
+
+    private function failureMessage(?TipoFalloOperacion $failure): string
+    {
+        return $failure?->value ?? 'The operation was rejected.';
     }
 
     /**

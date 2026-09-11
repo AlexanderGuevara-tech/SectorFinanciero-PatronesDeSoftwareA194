@@ -15,4 +15,10 @@ interface RepositorioCuentas
     public function todos(): array;
 
     public function porIdYCliente(int $id, int $customerId): ?Cuenta;
+
+    /**
+     * @param  list<int>  $ids
+     * @return list<Cuenta>
+     */
+    public function porIdsBloqueadas(array $ids): array;
 }
