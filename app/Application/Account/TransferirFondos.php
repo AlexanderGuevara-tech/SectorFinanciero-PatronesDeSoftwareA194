@@ -19,11 +19,12 @@ final class TransferirFondos
         private RepositorioOperaciones $operations,
         private RepositorioLedger $ledger,
         private RepositorioIdempotencia $idempotency,
+        private PoliticaTransferencia $externalPolicy,
     ) {}
 
-    public function ejecutar(TransferirFondosDTO $command): ResultadoOperacion
+    public function ejecutar(TransferirFondosDTO $command, ?PoliticaTransferencia $additionalPolicy = null): ResultadoOperacion
     {
-        return $this->unit->ejecutar(function () use ($command): ResultadoOperacion {
+        return $this->unit->ejecutar(function () use ($command, $additionalPolicy): ResultadoOperacion {
             $fingerprint = $command->fingerprint();
             $existing = $this->idempotency->buscar($command->requestKey);
             if ($existing !== null) {
@@ -46,6 +47,11 @@ final class TransferirFondos
                 new MonedaCoincidente,
                 new SaldoSuficiente,
             ]))->validar($context);
+            if ($failure !== null) {
+                return ResultadoOperacion::rejected($failure);
+            }
+
+            $failure = $this->externalPolicy->validar($command) ?? $additionalPolicy?->validar($command);
             if ($failure !== null) {
                 return ResultadoOperacion::rejected($failure);
             }

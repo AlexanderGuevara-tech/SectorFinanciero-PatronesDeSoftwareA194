@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Application\Account\AbrirCuenta;
 use App\Application\Account\BloquearCuenta;
+use App\Application\Account\CanalWeb;
 use App\Application\Account\ConsultarSaldo;
 use App\Application\Account\DesbloquearCuenta;
 use App\Application\Account\ListarCuentas;
 use App\Application\Account\ReversarTransferencia;
 use App\Application\Account\ReversarTransferenciaDTO;
 use App\Application\Account\TipoFalloOperacion;
-use App\Application\Account\TransferirFondos;
 use App\Application\Account\TransferirFondosDTO;
 use App\Domain\Account\CatalogoTiposCuenta;
 use App\Domain\Account\DefinicionTipoCuenta;
@@ -31,7 +31,7 @@ class ControladorCuentas extends Controller
         private ConsultarSaldo $consultarSaldo,
         private BloquearCuenta $bloquearCuenta,
         private DesbloquearCuenta $desbloquearCuenta,
-        private TransferirFondos $transferirFondos,
+        private CanalWeb $canalTransferencias,
         private ReversarTransferencia $reversarTransferencia,
         private RepositorioCuentas $repositorioCuentas,
         private RepositorioClientes $repositorioClientes,
@@ -164,7 +164,7 @@ class ControladorCuentas extends Controller
 
     public function transfer(PeticionTransferirFondos $request): RedirectResponse
     {
-        $result = $this->transferirFondos->ejecutar(new TransferirFondosDTO(
+        $result = $this->canalTransferencias->transferir(new TransferirFondosDTO(
             actorId: (int) auth()->id(),
             sourceAccountId: (int) $request->validated('source_account_id'),
             destinationAccountId: (int) $request->validated('destination_account_id'),

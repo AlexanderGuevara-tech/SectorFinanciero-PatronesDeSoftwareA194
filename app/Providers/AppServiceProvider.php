@@ -4,6 +4,13 @@ namespace App\Providers;
 
 use App\Application\Account\AlcanceClientes;
 use App\Application\Account\PoliticaAutorizacion;
+use App\Application\Account\PoliticaTransferencia;
+use App\Application\Account\PoliticaValidacionExterna;
+use App\Application\Account\ProcesadorEstandar;
+use App\Application\Account\ProcesadorTransferencia;
+use App\Application\Account\PuertoKycTransferencia;
+use App\Application\Account\PuertoLimiteTransferencia;
+use App\Application\Account\PuertoRiesgoTransferencia;
 use App\Application\Account\RepositorioIdempotencia;
 use App\Application\Account\RepositorioLedger;
 use App\Application\Account\RepositorioOperaciones;
@@ -18,6 +25,9 @@ use App\Domain\Account\FabricaPaquetesCuentas;
 use App\Domain\Account\FabricaPaquetesCuentasPorFamilia;
 use App\Domain\Account\RepositorioCuentas;
 use App\Domain\Customer\RepositorioClientes;
+use App\Infrastructure\Account\KycSimulado;
+use App\Infrastructure\Account\LimiteSimulado;
+use App\Infrastructure\Account\RiesgoSimulado;
 use App\Infrastructure\Persistence\AlcanceClientesOperador;
 use App\Infrastructure\Persistence\PoliticaAutorizacionUsuario;
 use App\Infrastructure\Persistence\RepositorioClientesEloquent;
@@ -55,6 +65,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(RepositorioOperaciones::class, RepositorioOperacionesEloquent::class);
         $this->app->bind(RepositorioLedger::class, RepositorioLedgerEloquent::class);
         $this->app->bind(RepositorioIdempotencia::class, RepositorioIdempotenciaEloquent::class);
+        $this->app->bind(PuertoKycTransferencia::class, KycSimulado::class);
+        $this->app->bind(PuertoRiesgoTransferencia::class, RiesgoSimulado::class);
+        $this->app->bind(PuertoLimiteTransferencia::class, LimiteSimulado::class);
+        $this->app->bind(PoliticaTransferencia::class, PoliticaValidacionExterna::class);
+        $this->app->bind(ProcesadorTransferencia::class, ProcesadorEstandar::class);
     }
 
     /**

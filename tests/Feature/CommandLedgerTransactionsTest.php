@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Application\Account\AlcanceClientes;
 use App\Application\Account\PoliticaAutorizacion;
+use App\Application\Account\PoliticaTransferencia;
+use App\Application\Account\PoliticaValidacionExterna;
 use App\Application\Account\ResultadoOperacion;
 use App\Application\Account\ReversarTransferencia;
 use App\Application\Account\ReversarTransferenciaDTO;
@@ -11,6 +13,9 @@ use App\Application\Account\TipoFalloOperacion;
 use App\Application\Account\TransferirFondos;
 use App\Application\Account\TransferirFondosDTO;
 use App\Domain\Account\FabricaPaquetesCuentas;
+use App\Infrastructure\Account\KycSimulado;
+use App\Infrastructure\Account\LimiteSimulado;
+use App\Infrastructure\Account\RiesgoSimulado;
 use App\Infrastructure\Persistence\Cliente;
 use App\Infrastructure\Persistence\RepositorioCuentasEloquent;
 use App\Infrastructure\Persistence\RepositorioIdempotenciaEloquent;
@@ -48,6 +53,29 @@ final class CommandLedgerTransactionsTest extends TestCase
         $this->assertFailure(new TransferirFondosDTO($actor, $source, $destination, 'COP', '125.00', 'balance'), TipoFalloOperacion::InsufficientBalance);
         $this->assertSame('100.00', $this->balance($source));
         $this->assertSame(0, DB::table('transactions')->count());
+    }
+
+    #[Test]
+    public function it_rejects_simulated_kyc_and_limit_decisions_without_posting_entries(): void
+    {
+        [$actor, $source, $destination] = $this->accounts();
+        $this->app->instance(PoliticaTransferencia::class, new PoliticaValidacionExterna(
+            new KycSimulado([$actor]), new RiesgoSimulado, new LimiteSimulado,
+        ));
+        $kyc = $this->transfer(new TransferirFondosDTO($actor, $source, $destination, 'COP', '25.00', 'kyc'));
+
+        $this->app->instance(PoliticaTransferencia::class, new PoliticaValidacionExterna(
+            new KycSimulado, new RiesgoSimulado, new LimiteSimulado(['COP' => '20.00']),
+        ));
+        $limit = $this->transfer(new TransferirFondosDTO($actor, $source, $destination, 'COP', '25.00', 'limit'));
+
+        $this->assertSame(TipoFalloOperacion::KycRejected, $kyc->failure);
+        $this->assertSame(TipoFalloOperacion::TransferLimitExceeded, $limit->failure);
+        $this->assertSame('100.00', $this->balance($source));
+        $this->assertSame('0.00', $this->balance($destination));
+        $this->assertSame(0, DB::table('transactions')->count());
+        $this->assertSame(0, DB::table('ledger_lines')->count());
+        $this->assertSame(0, DB::table('idempotency_keys')->count());
     }
 
     #[Test]
@@ -174,6 +202,7 @@ final class CommandLedgerTransactionsTest extends TestCase
             new RepositorioOperacionesEloquent,
             new RepositorioLedgerEloquent,
             new RepositorioIdempotenciaEloquent,
+            app(PoliticaTransferencia::class),
         ))->ejecutar($command);
     }
 

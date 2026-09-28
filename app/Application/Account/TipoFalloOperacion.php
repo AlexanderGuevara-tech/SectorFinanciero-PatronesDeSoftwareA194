@@ -16,4 +16,7 @@ enum TipoFalloOperacion: string
     case ReasonRequired = 'reason_required';
     case IdempotencyConflict = 'idempotency_conflict';
     case InvalidOperation = 'invalid_operation';
+    case KycRejected = 'kyc_rejected';
+    case FraudSuspected = 'fraud_suspected';
+    case TransferLimitExceeded = 'transfer_limit_exceeded';
 }
