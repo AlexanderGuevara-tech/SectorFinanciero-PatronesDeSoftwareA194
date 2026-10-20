@@ -31,9 +31,9 @@ Agregar una consulta de préstamos protegida mediante **Proxy**, sin reemplazar 
 
 - [x] 1. Extender usuario-cliente de forma nullable y habilitar asignación segura desde administración.
 - [x] 2. Registrar `view-loans` y agregar la consulta real y su Proxy de protección.
-- [ ] 3. Exponer la consulta autenticada y cubrir aislamiento de prestatario y operador con pruebas. Implementación y verificación completadas; cierre de commit pendiente de autorización explícita.
-- [ ] 4. Ejecutar pruebas focalizadas y regresiones, aplicar Pint y revisar el diff.
-- [ ] 5. Registrar la disposición de revisión del candidato final y la evidencia/commits.
+- [x] 3. Exponer la consulta autenticada y cubrir aislamiento de prestatario y operador con pruebas.
+- [x] 4. Ejecutar pruebas focalizadas y regresiones, aplicar Pint y revisar el diff.
+- [x] 5. Registrar la disposición de revisión del candidato final y la evidencia/commits. Revisión nativa omitida a pedido explícito del usuario; verificación independiente ejecutada.
 
 ## Riesgos
 
@@ -51,11 +51,13 @@ Agregar una consulta de préstamos protegida mediante **Proxy**, sin reemplazar 
 - Pint: `vendor/bin/pint --dirty --format agent` ejecutado con PHP 8.3.16; resultado `passed`, sin archivos reformateados.
 - Assessment nativo: `unassessable` por presencia de archivos no rastreados; se ejecutó verificación independiente de alto riesgo, sin hallazgos.
 - Work-unit 3 RED: `C:/laragon/bin/php/php-8.3.16-Win32-vs16-x64/php.exe artisan test --compact tests/Feature/LoanQueryRoutesTest.php` falló antes de implementar (8 tests: 4 pasaron, 3 fallaron y 1 error); sin ruta, los casos de acceso permitido devolvían 404 y el contrato inyectado no recibía la llamada.
-- Work-unit 3 GREEN: el comando focalizado pasó con 8 tests y 15 assertions. Verificación independiente conjunta de ruta, Proxy, préstamos y vínculo usuario-cliente pasó con 33 tests y 130 assertions; `git diff --check` pasó sin salida. Pint se ejecutó después con PHP 8.3.16 y pasó sin reportar archivos reformateados. Ruta GET `/loans/{loan}` autenticada, controlador dependiente solo de `ConsultaPrestamo`, null → 404, vista de solo lectura con campos existentes y pruebas de prestatario, permiso, alcance, ausencia y autenticación. Sin acciones financieras. Work-unit 3 sigue sin stage/commit.
+- Work-unit 3 GREEN: el comando focalizado pasó con 8 tests y 15 assertions. Verificación independiente conjunta de ruta, Proxy, préstamos y vínculo usuario-cliente pasó con 33 tests y 130 assertions; `git diff --check` pasó sin salida. Pint se ejecutó después con PHP 8.3.16 y pasó sin reportar archivos reformateados. Ruta GET `/loans/{loan}` autenticada, controlador dependiente solo de `ConsultaPrestamo`, null → 404, vista de solo lectura con campos existentes y pruebas de prestatario, permiso, alcance, ausencia y autenticación. Sin acciones financieras. Commit work-unit 3: `9ff8b05` (`feat: expose protected loan detail route`), autorizado localmente; no se hizo push.
 - Commit work-unit 2: `f65bd48` (`feat: add protected loan query proxy`). Commit local autorizado explícitamente; no se hizo push.
+- Work-unit 3 commit: `9ff8b05` (`feat: expose protected loan detail route`).
 - Commit: `8e7d153` (`feat: link users to borrower customers`).
 - El usuario dispuso continuar sin la revisión nativa del candidato `sha256:ce0a5164…`; su lineage se abandonó con `operator_disposition`, sin resultados ni hallazgos admitidos.
+- Para el work-unit 3, la inspección del rango committed-only `f65bd48c..9ff8b05f` produjo el candidato `sha256:ae1dbaf5…`. No se inició otra revisión nativa por la disposición explícita del usuario de continuar sin revisión. La selección de untracked para excluir el docx temporal fue rechazada por la herramienta; no se leyó ni modificó ese archivo. La verificación independiente del código pasó.
 
 ## Estado
 
-Tareas 1 y 2 completadas. Work-unit 3 implementado y verificado, pero sigue en curso hasta recibir autorización explícita para el commit local. La regresión, Pint y diff-check de los cambios actuales pasaron; resta cerrar las tareas 3–5. No se modifican reglas financieras ni patrones anteriores.
+Tareas 1–5 completadas. La regresión (33 tests/130 assertions), Pint, diff-check y revisión independiente pasaron; commits locales de implementación: `8e7d153`, `f65bd48` y `9ff8b05` (sin push). La revisión nativa del candidato final se omitió a pedido explícito del usuario. No se modifican reglas financieras ni patrones anteriores.
