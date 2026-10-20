@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\PeticionUsuarioActualizar;
 use App\Http\Requests\PeticionUsuarioCrear;
+use App\Infrastructure\Persistence\Cliente;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -36,6 +37,7 @@ class ControladorUsuarios extends Controller
             'navegacion' => $this->navegacionBasica(),
             'usuario' => $usuario->load('roles'),
             'roles' => Role::all(),
+            'clientes' => Cliente::orderBy('name')->get(['id', 'name', 'doc_type', 'doc_number']),
         ]);
     }
 
@@ -60,6 +62,7 @@ class ControladorUsuarios extends Controller
             'usuario' => $usuario->load('roles'),
             'usuarioEditar' => $user->load('roles'),
             'roles' => Role::all(),
+            'clientes' => Cliente::orderBy('name')->get(['id', 'name', 'doc_type', 'doc_number']),
         ]);
     }
 

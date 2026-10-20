@@ -5,6 +5,8 @@ namespace App\Http\Requests;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Exists;
 
 class PeticionUsuarioActualizar extends FormRequest
 {
@@ -14,7 +16,7 @@ class PeticionUsuarioActualizar extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, string>>
+     * @return array<string, array<int, Exists|string>>
      */
     public function rules(): array
     {
@@ -24,6 +26,7 @@ class PeticionUsuarioActualizar extends FormRequest
             'password' => ['nullable', 'string', 'min:8'],
             'roles' => ['nullable', 'array'],
             'roles.*' => ['exists:roles,id'],
+            'customer_id' => ['nullable', 'integer', Rule::exists('customers', 'id')->whereNull('deleted_at')],
         ];
     }
 
