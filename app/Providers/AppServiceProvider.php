@@ -6,6 +6,7 @@ use App\Application\Account\AlcanceClientes;
 use App\Application\Account\PoliticaAutorizacion;
 use App\Application\Account\PoliticaTransferencia;
 use App\Application\Account\PoliticaValidacionExterna;
+use App\Application\Account\ProcesadorConTrazabilidad;
 use App\Application\Account\ProcesadorEstandar;
 use App\Application\Account\ProcesadorTransferencia;
 use App\Application\Account\PuertoKycTransferencia;
@@ -35,10 +36,12 @@ use App\Infrastructure\Persistence\RepositorioCuentasEloquent;
 use App\Infrastructure\Persistence\RepositorioIdempotenciaEloquent;
 use App\Infrastructure\Persistence\RepositorioLedgerEloquent;
 use App\Infrastructure\Persistence\RepositorioOperacionesEloquent;
+use App\Infrastructure\Persistence\RepositorioPrestamosEloquent;
 use App\Infrastructure\Persistence\UnidadDeTrabajoEloquent;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Psr\Log\LoggerInterface;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -69,7 +72,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PuertoRiesgoTransferencia::class, RiesgoSimulado::class);
         $this->app->bind(PuertoLimiteTransferencia::class, LimiteSimulado::class);
         $this->app->bind(PoliticaTransferencia::class, PoliticaValidacionExterna::class);
-        $this->app->bind(ProcesadorTransferencia::class, ProcesadorEstandar::class);
+        $this->app->bind(ProcesadorTransferencia::class, fn ($app): ProcesadorTransferencia => new ProcesadorConTrazabilidad(
+            $app->make(ProcesadorEstandar::class),
+            $app->make(LoggerInterface::class),
+        ));
     }
 
     /**

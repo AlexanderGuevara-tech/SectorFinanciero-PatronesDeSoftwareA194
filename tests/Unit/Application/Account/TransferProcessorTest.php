@@ -7,11 +7,14 @@ use App\Application\Account\CanalSucursal;
 use App\Application\Account\CanalWeb;
 use App\Application\Account\PoliticaAutorizacion;
 use App\Application\Account\PoliticaValidacionExterna;
+use App\Application\Account\ProcesadorConTrazabilidad;
 use App\Application\Account\ProcesadorControlado;
 use App\Application\Account\ProcesadorEstandar;
+use App\Application\Account\ProcesadorTransferencia;
 use App\Application\Account\RepositorioIdempotencia;
 use App\Application\Account\RepositorioLedger;
 use App\Application\Account\RepositorioOperaciones;
+use App\Application\Account\ResultadoOperacion;
 use App\Application\Account\TipoFalloOperacion;
 use App\Application\Account\TransferirFondos;
 use App\Application\Account\TransferirFondosDTO;
@@ -25,10 +28,91 @@ use App\Infrastructure\Account\KycSimulado;
 use App\Infrastructure\Account\LimiteSimulado;
 use App\Infrastructure\Account\RiesgoSimulado;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+use RuntimeException;
+use Tests\TestCase;
 
 final class TransferProcessorTest extends TestCase
 {
+    #[Test]
+    public function it_passes_the_same_command_and_returns_the_same_result_through_a_channel(): void
+    {
+        $command = $this->command('private-key');
+        $expected = ResultadoOperacion::committed(41);
+        $processor = $this->createMock(ProcesadorTransferencia::class);
+        $processor->expects($this->once())->method('ejecutar')->with($this->identicalTo($command))->willReturn($expected);
+        $logger = $this->createMock(LoggerInterface::class);
+
+        $actual = (new CanalWeb(new ProcesadorConTrazabilidad($processor, $logger)))->transferir($command);
+
+        $this->assertSame($expected, $actual);
+    }
+
+    #[Test]
+    public function it_traces_before_and_after_a_rejected_transfer_without_exposing_payload(): void
+    {
+        $command = $this->command('private-key');
+        $expected = ResultadoOperacion::rejected(TipoFalloOperacion::FraudSuspected);
+        $events = [];
+        $processor = $this->createMock(ProcesadorTransferencia::class);
+        $processor->expects($this->once())->method('ejecutar')->with($this->identicalTo($command))
+            ->willReturnCallback(static function () use (&$events, $expected): ResultadoOperacion {
+                $events[] = 'delegate';
+
+                return $expected;
+            });
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->exactly(2))->method('info')
+            ->willReturnCallback(static function (string $message, array $context = []) use (&$events): void {
+                $events[] = [$message, $context];
+            });
+
+        $actual = (new ProcesadorConTrazabilidad($processor, $logger))->ejecutar($command);
+
+        $this->assertSame($expected, $actual);
+        $this->assertSame([
+            ['transfer.processing.started', []],
+            'delegate',
+            ['transfer.processing.finished', []],
+        ], $events);
+    }
+
+    #[Test]
+    public function it_returns_the_committed_result_when_completion_logging_fails(): void
+    {
+        $command = $this->command('private-key');
+        $expected = ResultadoOperacion::committed(41);
+        $events = [];
+        $processor = $this->createMock(ProcesadorTransferencia::class);
+        $processor->expects($this->once())->method('ejecutar')->with($this->identicalTo($command))
+            ->willReturnCallback(static function () use (&$events, $expected): ResultadoOperacion {
+                $events[] = 'delegate';
+
+                return $expected;
+            });
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->exactly(2))->method('info')
+            ->willReturnCallback(static function (string $message) use (&$events): void {
+                $events[] = $message;
+                if ($message === 'transfer.processing.finished') {
+                    throw new RuntimeException('Completion log failed');
+                }
+            });
+
+        $actual = (new ProcesadorConTrazabilidad($processor, $logger))->ejecutar($command);
+
+        $this->assertSame($expected, $actual);
+        $this->assertSame(['transfer.processing.started', 'delegate', 'transfer.processing.finished'], $events);
+    }
+
+    #[Test]
+    public function it_resolves_the_decorated_processor_from_the_application_container(): void
+    {
+        $processor = $this->app->make(ProcesadorTransferencia::class);
+
+        $this->assertInstanceOf(ProcesadorConTrazabilidad::class, $processor);
+    }
+
     #[Test]
     public function it_commits_through_the_web_channel_and_rejects_a_stricter_branch_policy_without_ledger_writes(): void
     {
