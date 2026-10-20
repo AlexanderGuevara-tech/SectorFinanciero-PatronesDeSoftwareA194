@@ -4,6 +4,7 @@ use App\Http\Controllers\ControladorAutenticacion;
 use App\Http\Controllers\ControladorClientes;
 use App\Http\Controllers\ControladorCuentas;
 use App\Http\Controllers\ControladorPanel;
+use App\Http\Controllers\ControladorPrestamos;
 use App\Http\Controllers\ControladorRoles;
 use App\Http\Controllers\ControladorUsuarios;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,7 @@ Route::middleware('guest')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::get('/dashboard', ControladorPanel::class)->name('dashboard');
+    Route::get('/loans/{loan}', [ControladorPrestamos::class, 'show'])->name('loans.show');
 
     Route::middleware('can:view-accounts')->group(function (): void {
         Route::get('/accounts', [ControladorCuentas::class, 'index'])->name('accounts.index');
