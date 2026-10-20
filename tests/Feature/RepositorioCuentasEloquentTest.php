@@ -61,6 +61,23 @@ class RepositorioCuentasEloquentTest extends TestCase
         $this->assertSame($user->id, $recuperada->operadoPorId());
     }
 
+    #[Test]
+    public function test_internal_marker_round_trips_and_legacy_accounts_default_to_ordinary(): void
+    {
+        $user = User::factory()->create();
+        $customer = Cliente::factory()->create();
+        $internal = new Cuenta('100.00', Moneda::COP(), EstadoCuenta::Activa, 'savings', $customer->id, $user->id, new CuentaAhorro, esInterna: true);
+        $ordinary = new Cuenta('50.00', Moneda::COP(), EstadoCuenta::Activa, 'savings', $customer->id, $user->id, new CuentaAhorro);
+
+        $this->repositorio->guardar($internal);
+        $this->repositorio->guardar($ordinary);
+
+        $this->assertTrue($this->repositorio->porId($internal->id())->esInterna());
+        $this->assertFalse($this->repositorio->porId($ordinary->id())->esInterna());
+        $this->assertDatabaseHas('accounts', ['id' => $internal->id(), 'es_interna' => true]);
+        $this->assertDatabaseHas('accounts', ['id' => $ordinary->id(), 'es_interna' => false]);
+    }
+
     /**
      * Debería guardar y recuperar una cuenta corriente preservando saldo como string.
      */
@@ -151,6 +168,7 @@ class RepositorioCuentasEloquentTest extends TestCase
         $this->assertSame(EstadoCuenta::Activa, $recuperada?->estado());
         $this->assertSame($customer->id, $recuperada?->customerId());
         $this->assertSame($user->id, $recuperada?->operadoPorId());
+        $this->assertFalse($recuperada?->esInterna());
     }
 
     /**

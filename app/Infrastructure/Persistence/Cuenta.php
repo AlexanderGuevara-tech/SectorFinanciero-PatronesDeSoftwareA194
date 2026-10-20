@@ -17,6 +17,11 @@ class Cuenta extends Model
 
     protected $table = 'accounts';
 
+    protected function casts(): array
+    {
+        return ['es_interna' => 'boolean'];
+    }
+
     public function cliente(): BelongsTo
     {
         return $this->belongsTo(Cliente::class, 'customer_id');

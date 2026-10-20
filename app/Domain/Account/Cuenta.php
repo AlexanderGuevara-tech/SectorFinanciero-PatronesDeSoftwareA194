@@ -18,6 +18,7 @@ final class Cuenta
         private ?PaqueteCuenta $paquete = null,
         private ?int $id = null,
         private ?Cliente $cliente = null,
+        private bool $esInterna = false,
     ) {
         if ($this->paquete === null) {
             $this->paquete = new PaqueteCuenta(
@@ -88,6 +89,11 @@ final class Cuenta
         return $this->cliente;
     }
 
+    public function esInterna(): bool
+    {
+        return $this->esInterna;
+    }
+
     /**
      * Creates an independent account prototype ready to receive a new identity.
      */
@@ -111,6 +117,7 @@ final class Cuenta
                 sobregiro: clone $this->paquete->sobregiro,
             ),
             cliente: $this->cliente === null ? null : clone $this->cliente,
+            esInterna: $this->esInterna,
         );
     }
 

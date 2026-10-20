@@ -37,6 +37,7 @@ class CuentaBuilderTest extends TestCase
             ->withFamily('empresarial')
             ->withPackage($package)
             ->withId(19)
+            ->asInternal()
             ->build();
 
         $this->assertSame('125.50', $account->saldo());
@@ -49,6 +50,7 @@ class CuentaBuilderTest extends TestCase
         $this->assertSame('empresarial', $account->familia());
         $this->assertSame($package, $account->paquete());
         $this->assertSame(19, $account->id());
+        $this->assertTrue($account->esInterna());
     }
 
     #[Test]
@@ -67,6 +69,7 @@ class CuentaBuilderTest extends TestCase
         $this->assertSame('personal', $account->paquete()->familia);
         $this->assertSame(null, $account->operadoPorId());
         $this->assertSame(null, $account->id());
+        $this->assertFalse($account->esInterna());
     }
 
     #[Test]

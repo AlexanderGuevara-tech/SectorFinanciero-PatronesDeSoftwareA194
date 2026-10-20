@@ -26,6 +26,7 @@ final class RepositorioCuentasEloquent implements RepositorioCuentas
         $modelo->familia = $cuenta->familia();
         $modelo->customer_id = $cuenta->customerId();
         $modelo->operado_por = $cuenta->operadoPorId();
+        $modelo->es_interna = $cuenta->esInterna();
 
         $modelo->save();
 
@@ -104,6 +105,7 @@ final class RepositorioCuentasEloquent implements RepositorioCuentas
             familia: $paquete->familia,
             paquete: $paquete,
             id: (int) $modelo->id,
+            esInterna: $modelo->es_interna,
             cliente: $modelo->relationLoaded('cliente') && $modelo->cliente !== null
                 ? new ClienteDominio($modelo->cliente->name, $modelo->cliente->doc_type, $modelo->cliente->doc_number, $modelo->cliente->email, $modelo->cliente->phone, (int) $modelo->cliente->id)
                 : null,

@@ -26,6 +26,8 @@ use App\Domain\Account\FabricaPaquetesCuentas;
 use App\Domain\Account\FabricaPaquetesCuentasPorFamilia;
 use App\Domain\Account\RepositorioCuentas;
 use App\Domain\Customer\RepositorioClientes;
+use App\Domain\Loan\CatalogoProductosPrestamo;
+use App\Domain\Loan\RepositorioPrestamos;
 use App\Infrastructure\Account\KycSimulado;
 use App\Infrastructure\Account\LimiteSimulado;
 use App\Infrastructure\Account\RiesgoSimulado;
@@ -62,6 +64,8 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->bind(RepositorioCuentas::class, RepositorioCuentasEloquent::class);
         $this->app->bind(RepositorioClientes::class, RepositorioClientesEloquent::class);
+        $this->app->singleton(CatalogoProductosPrestamo::class, fn (): CatalogoProductosPrestamo => new CatalogoProductosPrestamo(config('loans.products', [])));
+        $this->app->bind(RepositorioPrestamos::class, RepositorioPrestamosEloquent::class);
         $this->app->bind(PoliticaAutorizacion::class, PoliticaAutorizacionUsuario::class);
         $this->app->bind(AlcanceClientes::class, AlcanceClientesOperador::class);
         $this->app->bind(UnidadDeTrabajo::class, UnidadDeTrabajoEloquent::class);

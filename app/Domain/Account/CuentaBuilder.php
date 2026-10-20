@@ -28,6 +28,8 @@ final class CuentaBuilder
 
     private ?Cliente $customer = null;
 
+    private bool $isInternal = false;
+
     public function withBalance(string $balance): self
     {
         $this->balance = $balance;
@@ -105,6 +107,13 @@ final class CuentaBuilder
         return $this;
     }
 
+    public function asInternal(): self
+    {
+        $this->isInternal = true;
+
+        return $this;
+    }
+
     public function build(): Cuenta
     {
         if ($this->type === null || trim($this->type) === '') {
@@ -131,6 +140,7 @@ final class CuentaBuilder
             paquete: $this->package,
             id: $this->id,
             cliente: $this->customer,
+            esInterna: $this->isInternal,
         );
     }
 }
