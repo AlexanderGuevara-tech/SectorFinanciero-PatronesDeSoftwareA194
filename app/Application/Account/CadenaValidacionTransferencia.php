@@ -9,13 +9,6 @@ final class CadenaValidacionTransferencia
 
     public function validar(ContextoValidacionTransferencia $contexto): ?TipoFalloOperacion
     {
-        foreach ($this->especificaciones as $especificacion) {
-            $fallo = $especificacion->fallo($contexto);
-            if ($fallo !== null) {
-                return $fallo;
-            }
-        }
-
-        return null;
+        return (new EspecificacionCompuestaTransferencia($this->especificaciones))->fallo($contexto);
     }
 }

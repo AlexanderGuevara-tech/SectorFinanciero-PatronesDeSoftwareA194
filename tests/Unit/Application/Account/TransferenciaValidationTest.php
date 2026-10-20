@@ -5,6 +5,7 @@ namespace Tests\Unit\Application\Account;
 use App\Application\Account\AlcanceClientes;
 use App\Application\Account\CadenaValidacionTransferencia;
 use App\Application\Account\ContextoValidacionTransferencia;
+use App\Application\Account\EspecificacionCompuestaTransferencia;
 use App\Application\Account\Especificaciones\AlcanceDeCuentas;
 use App\Application\Account\Especificaciones\CuentasExistentes;
 use App\Application\Account\Especificaciones\MismaCuenta;
@@ -78,6 +79,52 @@ final class TransferenciaValidationTest extends TestCase
     }
 
     #[Test]
+    public function it_returns_null_when_all_composite_children_succeed(): void
+    {
+        $calls = [];
+        $first = $this->recordingSpecification($calls, 'first');
+        $second = $this->recordingSpecification($calls, 'second');
+
+        $failure = (new EspecificacionCompuestaTransferencia([$first, $second]))->fallo(
+            $this->context($this->command()),
+        );
+
+        $this->assertNull($failure);
+        $this->assertSame(['first', 'second'], $calls);
+    }
+
+    #[Test]
+    public function it_returns_the_first_composite_failure_in_declared_order(): void
+    {
+        $calls = [];
+        $first = $this->recordingSpecification($calls, 'first');
+        $second = $this->recordingSpecification($calls, 'second', TipoFalloOperacion::CurrencyMismatch);
+        $third = $this->recordingSpecification($calls, 'third', TipoFalloOperacion::InsufficientBalance);
+
+        $failure = (new EspecificacionCompuestaTransferencia([$first, $second, $third]))->fallo(
+            $this->context($this->command()),
+        );
+
+        $this->assertSame(TipoFalloOperacion::CurrencyMismatch, $failure);
+        $this->assertSame(['first', 'second'], $calls);
+    }
+
+    #[Test]
+    public function it_short_circuits_later_composite_children_after_a_failure(): void
+    {
+        $calls = [];
+        $first = $this->recordingSpecification($calls, 'first', TipoFalloOperacion::SameAccount);
+        $later = $this->recordingSpecification($calls, 'later');
+
+        $failure = (new EspecificacionCompuestaTransferencia([$first, $later]))->fallo(
+            $this->context($this->command()),
+        );
+
+        $this->assertSame(TipoFalloOperacion::SameAccount, $failure);
+        $this->assertSame(['first'], $calls);
+    }
+
+    #[Test]
     public function it_short_circuits_specifications_in_declared_order(): void
     {
         $calls = [];
@@ -110,6 +157,41 @@ final class TransferenciaValidationTest extends TestCase
 
         $this->assertSame(TipoFalloOperacion::SameAccount, $failure);
         $this->assertSame(['first'], $calls);
+    }
+
+    /** @param list<string> $calls */
+    private function recordingSpecification(array &$calls, string $name, ?TipoFalloOperacion $failure = null): EspecificacionTransferencia
+    {
+        return new class($calls, $name, $failure) implements EspecificacionTransferencia
+        {
+            public function __construct(private array &$calls, private string $name, private ?TipoFalloOperacion $failure) {}
+
+            public function fallo(ContextoValidacionTransferencia $contexto): ?TipoFalloOperacion
+            {
+                $this->calls[] = $this->name;
+
+                return $this->failure;
+            }
+        };
+    }
+
+    #[Test]
+    public function it_keeps_the_chain_on_the_transfer_validation_path(): void
+    {
+        $loaded = false;
+        $context = $this->context($this->command(10, 10), $loaded);
+        $chain = new CadenaValidacionTransferencia([
+            new MismaCuenta,
+            new CuentasExistentes,
+            new AlcanceDeCuentas,
+            new MonedaCoincidente,
+            new SaldoSuficiente,
+        ]);
+
+        $failure = $chain->validar($context);
+
+        $this->assertSame(TipoFalloOperacion::SameAccount, $failure);
+        $this->assertFalse($loaded);
     }
 
     private function context(
