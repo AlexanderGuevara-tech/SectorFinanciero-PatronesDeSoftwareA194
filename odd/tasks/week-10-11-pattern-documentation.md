@@ -40,4 +40,4 @@ Completar los entregables Markdown de los dos patrones más recientes, reflejand
 
 ## Estado
 
-Tareas 1–3 completadas. Las cuatro entregas Markdown y Mermaid editable quedaron verificadas; no se generaron PNG porque no hay renderizador local. El usuario autorizó commits locales de documentación; no se hará push.
+Tareas 1–3 completadas. Las cuatro entregas Markdown y Mermaid editable quedaron verificadas; no se generaron PNG porque no hay renderizador local. Commit de entregables: `9a95ec8` (`docs: add week ten and eleven pattern guides`), autorizado localmente; no se hizo push.
