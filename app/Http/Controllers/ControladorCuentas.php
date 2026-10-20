@@ -4,14 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Application\Account\AbrirCuenta;
 use App\Application\Account\BloquearCuenta;
-use App\Application\Account\CanalWeb;
 use App\Application\Account\ConsultarSaldo;
 use App\Application\Account\DesbloquearCuenta;
 use App\Application\Account\ListarCuentas;
 use App\Application\Account\ReversarTransferencia;
 use App\Application\Account\ReversarTransferenciaDTO;
 use App\Application\Account\TipoFalloOperacion;
-use App\Application\Account\TransferirFondosDTO;
+use App\Application\Account\TransferenciaWebFacade;
 use App\Domain\Account\CatalogoTiposCuenta;
 use App\Domain\Account\DefinicionTipoCuenta;
 use App\Domain\Account\RepositorioCuentas;
@@ -31,7 +30,7 @@ class ControladorCuentas extends Controller
         private ConsultarSaldo $consultarSaldo,
         private BloquearCuenta $bloquearCuenta,
         private DesbloquearCuenta $desbloquearCuenta,
-        private CanalWeb $canalTransferencias,
+        private TransferenciaWebFacade $transferenciaWebFacade,
         private ReversarTransferencia $reversarTransferencia,
         private RepositorioCuentas $repositorioCuentas,
         private RepositorioClientes $repositorioClientes,
@@ -164,14 +163,14 @@ class ControladorCuentas extends Controller
 
     public function transfer(PeticionTransferirFondos $request): RedirectResponse
     {
-        $result = $this->canalTransferencias->transferir(new TransferirFondosDTO(
+        $result = $this->transferenciaWebFacade->transferir(
             actorId: (int) auth()->id(),
             sourceAccountId: (int) $request->validated('source_account_id'),
             destinationAccountId: (int) $request->validated('destination_account_id'),
             currency: $request->validated('currency'),
             amount: $request->validated('amount'),
             requestKey: $request->validated('request_key'),
-        ));
+        );
 
         if (! $result->isCommitted()) {
             return back()->withErrors(['operation' => $this->failureMessage($result->failure)]);
