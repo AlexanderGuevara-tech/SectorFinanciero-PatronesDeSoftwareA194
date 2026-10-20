@@ -34,6 +34,10 @@ class DatabaseSeeder extends Seeder
             ['name' => 'view-accounts'],
             ['description' => 'Consultar cuentas y movimientos.']
         );
+        Permission::firstOrCreate(
+            ['name' => 'view-loans'],
+            ['description' => 'Consultar préstamos autorizados.']
+        );
         $manageAccounts = Permission::firstOrCreate(
             ['name' => 'manage-accounts'],
             ['description' => 'Crear, bloquear y desbloquear cuentas.']

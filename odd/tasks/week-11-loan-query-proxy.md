@@ -11,7 +11,7 @@ Agregar una consulta de préstamos protegida mediante **Proxy**, sin reemplazar 
 - `view-loans` se registra como permiso disponible para asignación explícita mediante el administrador de roles; no se otorga automáticamente a todos los usuarios.
 - El acceso del operador se limita además mediante `AlcanceClientes` existente.
 - El Proxy delega la consulta real y oculta la existencia de préstamos ajenos a usuarios sin acceso.
-- Se conserva Singleton, Adapter, Bridge, Composite, Decorator, Facade y Flyweight.
+- Se conserva Singleton, Adapter, Bridge, Composite, Decorator, Facade y Flyweight. El usuario autorizó explícitamente continuar sin la revisión nativa del candidato anterior; la disposition no se extiende automáticamente a nuevos hashes de candidato.
 
 ## Alcance
 
@@ -30,10 +30,10 @@ Agregar una consulta de préstamos protegida mediante **Proxy**, sin reemplazar 
 ## Tareas
 
 - [x] 1. Extender usuario-cliente de forma nullable y habilitar asignación segura desde administración.
-- [ ] 2. Registrar `view-loans` y agregar la consulta real y su Proxy de protección.
+- [ ] 2. Registrar `view-loans` y agregar la consulta real y su Proxy de protección. Implementación y pruebas completadas; cierre de commit pendiente de autorización explícita.
 - [ ] 3. Exponer la consulta autenticada y cubrir aislamiento de prestatario y operador con pruebas.
 - [ ] 4. Ejecutar pruebas focalizadas y regresiones, aplicar Pint y revisar el diff.
-- [ ] 5. Completar revisión nativa del candidato y registrar evidencia/commits.
+- [ ] 5. Registrar la disposición de revisión del candidato final y la evidencia/commits.
 
 ## Riesgos
 
@@ -46,8 +46,14 @@ Agregar una consulta de préstamos protegida mediante **Proxy**, sin reemplazar 
 - RED: `UsuarioClienteLinkTest.php` falló antes de implementar: 0/7 pasaron; faltaban columna, relación y validación.
 - GREEN: `UsuarioClienteLinkTest.php` pasó con 9 tests y 44 assertions; cubre asignación, remoción, validación, autorización y usuarios legacy sin vínculo.
 - Migración `2026_09_10_000006_add_customer_id_to_users_table.php`: FK nullable a `customers`, `nullOnDelete`; IDs/correos no se usan para inferir vínculos.
-- `git diff --check` pasó. Regresión ampliada y Pint quedan pendientes.
+- Work-unit 2: `LoanQueryProxyTest.php` pasó con 7 tests y 24 assertions; cubre autorización previa a delegación, vinculación de prestatario, permiso + alcance operativo, denegación y ausencia de préstamo.
+- Verificación independiente de work-unit 2: `LoanQueryProxyTest.php`, `PrestamosTest.php` y `UsuarioClienteLinkTest.php` pasaron con 25 tests y 115 assertions; `git diff --check` pasó sin salida.
+- Pint: `vendor/bin/pint --dirty --format agent` ejecutado con PHP 8.3.16; resultado `passed`, sin archivos reformateados.
+- Assessment nativo: `unassessable` por presencia de archivos no rastreados; se ejecutó verificación independiente de alto riesgo, sin hallazgos.
+- Cierre de commit de work-unit 2 pendiente de autorización explícita del usuario.
+- Commit: `8e7d153` (`feat: link users to borrower customers`).
+- El usuario dispuso continuar sin la revisión nativa del candidato `sha256:ce0a5164…`; su lineage se abandonó con `operator_disposition`, sin resultados ni hallazgos admitidos.
 
 ## Estado
 
-Tarea 1 completada. Proxy, permiso `view-loans` y consulta web siguen pendientes. No se modifican reglas financieras ni patrones anteriores.
+Tarea 1 completada. Consulta real y Proxy implementados y verificados; permiso `view-loans` registrado sin asignación automática. Ruta/controlador y pruebas HTTP siguen pendientes. No se modifican reglas financieras ni patrones anteriores.

@@ -8,6 +8,10 @@ interface RepositorioPrestamos
 
     public function porIdBloqueado(int $id): ?Prestamo;
 
+    public function borrowerIdPorId(int $id): ?int;
+
+    public function porId(int $id): ?Prestamo;
+
     public function solicitar(int $borrowerId, int $destinationAccountId, int $applicantId, DefinicionProductoPrestamo $product, string $principal, string $requestKey): Prestamo;
 
     public function actualizarEstado(int $id, string $status, ?int $approvedBy = null, ?int $transactionId = null): void;

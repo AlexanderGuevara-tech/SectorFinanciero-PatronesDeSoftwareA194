@@ -16,6 +16,9 @@ use App\Application\Account\RepositorioIdempotencia;
 use App\Application\Account\RepositorioLedger;
 use App\Application\Account\RepositorioOperaciones;
 use App\Application\Account\UnidadDeTrabajo;
+use App\Application\Loan\ConsultaPrestamo;
+use App\Application\Loan\ProxyConsultaPrestamo;
+use App\Application\Loan\ServicioConsultaPrestamo;
 use App\Domain\Account\CatalogoTiposCuenta;
 use App\Domain\Account\CatalogoTiposCuentaEstatico;
 use App\Domain\Account\FabricaDeCuentas;
@@ -66,6 +69,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(RepositorioClientes::class, RepositorioClientesEloquent::class);
         $this->app->singleton(CatalogoProductosPrestamo::class, fn (): CatalogoProductosPrestamo => new CatalogoProductosPrestamo(config('loans.products', [])));
         $this->app->bind(RepositorioPrestamos::class, RepositorioPrestamosEloquent::class);
+        $this->app->bind(ConsultaPrestamo::class, fn ($app): ConsultaPrestamo => new ProxyConsultaPrestamo(
+            $app->make(ServicioConsultaPrestamo::class),
+            $app->make(RepositorioPrestamos::class),
+            $app->make(AlcanceClientes::class),
+        ));
         $this->app->bind(PoliticaAutorizacion::class, PoliticaAutorizacionUsuario::class);
         $this->app->bind(AlcanceClientes::class, AlcanceClientesOperador::class);
         $this->app->bind(UnidadDeTrabajo::class, UnidadDeTrabajoEloquent::class);
@@ -89,6 +97,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::define('manage-users', fn (User $user): bool => $user->hasPermission('manage-users'));
         Gate::define('view-accounts', fn (User $user): bool => $user->hasPermission('view-accounts'));
+        Gate::define('view-loans', fn (User $user): bool => $user->hasPermission('view-loans'));
         Gate::define('manage-accounts', fn (User $user): bool => $user->hasPermission('manage-accounts'));
         Gate::define('manage-customers', fn (User $user): bool => $user->hasPermission('manage-customers'));
     }

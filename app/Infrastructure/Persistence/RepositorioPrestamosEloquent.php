@@ -26,6 +26,20 @@ final class RepositorioPrestamosEloquent implements RepositorioPrestamos
         return $record === null ? null : $this->hydrate($record);
     }
 
+    public function borrowerIdPorId(int $id): ?int
+    {
+        $borrowerId = DB::table('loans')->where('id', $id)->value('borrower_id');
+
+        return $borrowerId === null ? null : (int) $borrowerId;
+    }
+
+    public function porId(int $id): ?Prestamo
+    {
+        $record = DB::table('loans')->where('id', $id)->first();
+
+        return $record === null ? null : $this->hydrate($record);
+    }
+
     public function solicitar(int $borrowerId, int $destinationAccountId, int $applicantId, DefinicionProductoPrestamo $product, string $principal, string $requestKey): Prestamo
     {
         $id = (int) DB::table('loans')->insertGetId([
