@@ -67,6 +67,7 @@ class PeticionAbrirCuentaTest extends TestCase
 
         $response = $this->actingAs($usuario)->post(route('accounts.store'), [
             'tipo' => 'checking',
+            'customer_id' => '',
             'name' => 'Ana Torres',
             'doc_type' => 'CC',
             'doc_number' => '9001',

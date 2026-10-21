@@ -97,13 +97,83 @@ class VistaCuentasTest extends TestCase
             ->assertSee('<main id="main-content"', false);
     }
 
-    public function test_el_indice_muestra_solo_las_cuentas_del_cliente_seleccionado_y_un_solo_nombre(): void
+    public function test_la_navegacion_de_cuentas_incluye_todas_las_pantallas_segun_permisos(): void
+    {
+        $usuario = $this->usuarioConPermisos(['view-accounts', 'manage-users', 'manage-customers', 'manage-accounts']);
+
+        $response = $this->actingAs($usuario)->get(route('accounts.index'));
+
+        foreach (['dashboard', 'accounts.index', 'admin.users.index', 'admin.roles.index', 'admin.clientes.index', 'admin.adapters.demo'] as $nombreRuta) {
+            $response->assertSee(route($nombreRuta), false);
+        }
+    }
+
+    public function test_la_navegacion_de_cuentas_oculta_paginas_sin_su_permiso(): void
     {
         $usuario = $this->usuarioConPermiso('view-accounts');
+
+        $response = $this->actingAs($usuario)->get(route('accounts.index'));
+
+        foreach (['admin.users.index', 'admin.roles.index', 'admin.clientes.index', 'admin.adapters.demo'] as $nombreRuta) {
+            $response->assertDontSee(route($nombreRuta), false);
+        }
+    }
+
+    public function test_administrator_sees_accounts_from_multiple_customers_without_filter(): void
+    {
+        $administrator = $this->usuarioAdministrador();
+        $firstCustomer = Cliente::factory()->create(['name' => 'First Account Owner']);
+        $secondCustomer = Cliente::factory()->create(['name' => 'Second Account Owner']);
+        $firstAccount = $this->abrirCuenta($firstCustomer->id, $administrator->id);
+        $secondAccount = $this->abrirCuenta($secondCustomer->id, $administrator->id);
+
+        $this->actingAs($administrator)->get(route('accounts.index'))
+            ->assertOk()
+            ->assertSee('>#'.$firstAccount->id().'</dd>', false)
+            ->assertSee('>#'.$secondAccount->id().'</dd>', false)
+            ->assertSee('First Account Owner')
+            ->assertSee('Second Account Owner');
+    }
+
+    public function test_customer_cannot_broaden_account_visibility_with_cliente_query(): void
+    {
+        $ownCustomer = Cliente::factory()->create(['name' => 'Own Account Owner']);
+        $otherCustomer = Cliente::factory()->create(['name' => 'Other Account Owner']);
+        $customerUser = $this->usuarioConPermiso('view-accounts');
+        $customerUser->customer()->associate($ownCustomer);
+        $customerUser->save();
+        $ownAccount = $this->abrirCuenta($ownCustomer->id, $customerUser->id);
+        $otherAccount = $this->abrirCuenta($otherCustomer->id, $customerUser->id);
+
+        foreach ([[], ['cliente' => $otherCustomer->id], ['cliente' => 0]] as $query) {
+            $this->actingAs($customerUser)->get(route('accounts.index', $query))
+                ->assertOk()
+                ->assertSee('>#'.$ownAccount->id().'</dd>', false)
+                ->assertDontSee('>#'.$otherAccount->id().'</dd>', false)
+                ->assertDontSee('Other Account Owner');
+        }
+    }
+
+    public function test_user_without_customer_cannot_use_cliente_to_view_accounts(): void
+    {
+        $user = $this->usuarioConPermiso('view-accounts');
+        $otherCustomer = Cliente::factory()->create(['name' => 'Unrelated Account Owner']);
+        $otherAccount = $this->abrirCuenta($otherCustomer->id, $user->id);
+
+        $this->actingAs($user)->get(route('accounts.index', ['cliente' => $otherCustomer->id]))
+            ->assertOk()
+            ->assertSee('No hay cuentas registradas todavía')
+            ->assertDontSee('>#'.$otherAccount->id().'</dd>', false)
+            ->assertDontSee('Unrelated Account Owner');
+    }
+
+    public function test_el_indice_muestra_solo_las_cuentas_del_cliente_seleccionado_y_un_solo_nombre(): void
+    {
+        $usuario = $this->usuarioAdministrador();
         $clienteSeleccionado = Cliente::factory()->create(['name' => 'Cliente Seleccionado']);
         $otroCliente = Cliente::factory()->create(['name' => 'Otro Cliente']);
         $this->abrirCuenta($clienteSeleccionado->id, $usuario->id);
-        $this->abrirCuenta($otroCliente->id, $usuario->id);
+        $otraCuenta = $this->abrirCuenta($otroCliente->id, $usuario->id);
 
         $response = $this->actingAs($usuario)->get(route('accounts.index', ['cliente' => $clienteSeleccionado->id]));
         $contenido = (string) $response->getContent();
@@ -111,7 +181,7 @@ class VistaCuentasTest extends TestCase
         $response->assertOk()
             ->assertSee('Cliente Seleccionado')
             ->assertDontSee('Otro Cliente')
-            ->assertDontSee('Cuenta #'.$this->idDeCuenta($otroCliente->id));
+            ->assertDontSee('>#'.$otraCuenta->id().'</dd>', false);
         self::assertSame(1, substr_count($contenido, 'Cliente Seleccionado'));
     }
 
@@ -128,6 +198,53 @@ class VistaCuentasTest extends TestCase
             ->assertSee('Cliente: Cliente del Detalle');
     }
 
+    public function test_el_formulario_permite_seleccionar_familia_personal_o_empresarial_con_personal_por_defecto(): void
+    {
+        $usuario = $this->usuarioConPermisos(['manage-accounts', 'view-accounts']);
+
+        $this->actingAs($usuario)->get(route('accounts.index'))
+            ->assertSee('<select id="familia" name="familia"', false)
+            ->assertSee('<option value="personal" selected>Personal</option>', false)
+            ->assertSee('<option value="empresarial" >Empresarial</option>', false);
+    }
+
+    public function test_la_familia_elegida_se_persiste_y_se_muestra_en_listado_y_detalle(): void
+    {
+        $usuario = $this->usuarioConPermisos(['manage-accounts', 'view-accounts']);
+        $cliente = Cliente::factory()->create();
+        $usuario->customer()->associate($cliente);
+        $usuario->save();
+
+        $response = $this->actingAs($usuario)->post(route('accounts.store'), [
+            'tipo' => 'checking',
+            'familia' => 'empresarial',
+            'customer_id' => $cliente->id,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('accounts', ['customer_id' => $cliente->id, 'familia' => 'empresarial']);
+        $this->actingAs($usuario)->get(route('accounts.index'))
+            ->assertSee('Familia')
+            ->assertSee('Empresarial');
+        $this->actingAs($usuario)->get($response->headers->get('Location'))
+            ->assertSee('Familia: Empresarial');
+    }
+
+    public function test_la_familia_personal_predeterminada_se_muestra_en_listado_y_detalle(): void
+    {
+        $usuario = $this->usuarioConPermiso('view-accounts');
+        $cliente = Cliente::factory()->create();
+        $usuario->customer()->associate($cliente);
+        $usuario->save();
+        $cuenta = $this->abrirCuenta($cliente->id, $usuario->id);
+
+        $this->actingAs($usuario)->get(route('accounts.index'))
+            ->assertSee('Familia')
+            ->assertSee('Personal');
+        $this->actingAs($usuario)->get(route('accounts.show', $cuenta->id()))
+            ->assertSee('Familia: Personal');
+    }
+
     public function test_el_detalle_muestra_controles_para_quien_puede_gestionar(): void
     {
         $usuario = $this->usuarioConPermisos(['manage-accounts', 'view-accounts']);
@@ -139,17 +256,23 @@ class VistaCuentasTest extends TestCase
         $response->assertOk()->assertSee('Bloquear')->assertSee('Desbloquear');
     }
 
+    private function usuarioAdministrador(): User
+    {
+        $usuario = User::factory()->create();
+        $rol = Role::firstOrCreate(['name' => 'administrator'], ['description' => 'Administrator']);
+        $permiso = Permission::firstOrCreate(['name' => 'view-accounts'], ['description' => 'view-accounts']);
+        $rol->permissions()->syncWithoutDetaching([$permiso->id]);
+        $usuario->roles()->attach($rol);
+
+        return $usuario;
+    }
+
     private function abrirCuenta(int $customerId, int $operadoPorId): Cuenta
     {
         return (new AbrirCuenta(
             fabrica: app(FabricaPaquetesCuentas::class),
             repositorio: app(RepositorioCuentas::class),
         ))->ejecutar(tipo: 'savings', customerId: $customerId, operadoPorId: $operadoPorId);
-    }
-
-    private function idDeCuenta(int $customerId): int
-    {
-        return app(RepositorioCuentas::class)->porCliente($customerId)[0]->id();
     }
 
     private function usuarioConPermiso(string $nombrePermiso): User

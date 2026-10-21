@@ -46,6 +46,22 @@ class ControladorPanel extends Controller
                 'nombreRuta' => 'admin.roles.index',
                 'permiso' => 'manage-users',
             ],
+            [
+                'identificador' => 'clientes',
+                'etiqueta' => 'Clientes',
+                'descripcion' => 'Gestión de clientes bancarios',
+                'estado' => 'activo',
+                'nombreRuta' => 'admin.clientes.index',
+                'permiso' => 'manage-customers',
+            ],
+            [
+                'identificador' => 'adapters',
+                'etiqueta' => 'Adapter demo',
+                'descripcion' => 'Validaciones simuladas de transferencias',
+                'estado' => 'activo',
+                'nombreRuta' => 'admin.adapters.demo',
+                'permiso' => 'manage-accounts',
+            ],
         ];
 
         /** @var list<array{identificador: string, etiqueta: string, descripcion: string, estado: 'activo'|'planificado', nombreRuta: ?string, permiso: ?string}> $modulos */

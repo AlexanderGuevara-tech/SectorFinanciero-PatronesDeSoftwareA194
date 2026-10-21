@@ -18,4 +18,12 @@ final class ListarCuentas
     {
         return $this->repositorio->porCliente($customerId);
     }
+
+    /**
+     * @return list<Cuenta>
+     */
+    public function ejecutarTodas(): array
+    {
+        return $this->repositorio->todos();
+    }
 }

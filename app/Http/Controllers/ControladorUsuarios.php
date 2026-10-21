@@ -126,6 +126,18 @@ class ControladorUsuarios extends Controller
                 'nombreRuta' => 'admin.roles.index',
                 'permiso' => 'manage-users',
             ],
+            [
+                'identificador' => 'cuentas', 'etiqueta' => 'Cuentas', 'descripcion' => 'Gestión de cuentas bancarias',
+                'estado' => 'activo', 'nombreRuta' => 'accounts.index', 'permiso' => 'view-accounts',
+            ],
+            [
+                'identificador' => 'clientes', 'etiqueta' => 'Clientes', 'descripcion' => 'Gestión de clientes bancarios',
+                'estado' => 'activo', 'nombreRuta' => 'admin.clientes.index', 'permiso' => 'manage-customers',
+            ],
+            [
+                'identificador' => 'adapters', 'etiqueta' => 'Adapter demo', 'descripcion' => 'Validaciones simuladas de transferencias',
+                'estado' => 'activo', 'nombreRuta' => 'admin.adapters.demo', 'permiso' => 'manage-accounts',
+            ],
         ];
     }
 }

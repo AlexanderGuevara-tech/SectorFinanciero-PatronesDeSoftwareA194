@@ -17,6 +17,7 @@
             <h2 id="balance-heading" class="text-xl font-bold">Saldo</h2>
             <p class="mt-4 text-4xl font-mono font-bold text-slate-900 dark:text-slate-100">{{ $moneda }} {{ $saldo }}</p>
             <p class="mt-3 text-slate-600 dark:text-slate-400">Cliente: {{ $clienteNombre }}</p>
+            <p class="mt-2 text-slate-600 dark:text-slate-400">Familia: {{ $familia === 'empresarial' ? 'Empresarial' : 'Personal' }}</p>
         </section>
 
         @if ($usuario->can('manage-accounts'))

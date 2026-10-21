@@ -33,6 +33,10 @@
                                     <dd class="font-semibold text-slate-900 dark:text-slate-100">{{ $cuenta->cliente()?->nombre() ?? 'Sin cliente' }}</dd>
                                 </div>
                                 <div class="flex justify-between">
+                                    <dt class="text-slate-500 dark:text-slate-400">Familia</dt>
+                                    <dd class="font-semibold text-slate-900 dark:text-slate-100">{{ $cuenta->familia() === 'empresarial' ? 'Empresarial' : 'Personal' }}</dd>
+                                </div>
+                                <div class="flex justify-between">
                                     <dt class="text-slate-500 dark:text-slate-400">Saldo</dt>
                                     <dd class="font-mono font-semibold text-slate-900 dark:text-slate-100">{{ $cuenta->moneda()->codigo() }} {{ $cuenta->saldo() }}</dd>
                                 </div>
@@ -63,6 +67,13 @@
                             </select>
                         </div>
                         <div class="flex-1">
+                            <label for="familia" class="block text-sm font-semibold text-indigo-900 dark:text-indigo-200">Familia de cuenta</label>
+                            <select id="familia" name="familia" class="mt-2 block w-full rounded-lg border border-indigo-300 bg-white px-3 py-2 text-sm text-indigo-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-100">
+                                <option value="personal" @selected(old('familia', 'personal') === 'personal')>Personal</option>
+                                <option value="empresarial" @selected(old('familia') === 'empresarial')>Empresarial</option>
+                            </select>
+                        </div>
+                        <div class="flex-1">
                             <label for="customer_id" class="block text-sm font-semibold text-indigo-900 dark:text-indigo-200">Cliente</label>
                             <select id="customer_id" name="customer_id" class="mt-2 block w-full rounded-lg border border-indigo-300 bg-white px-3 py-2 text-sm dark:border-indigo-700 dark:bg-slate-800">
                                 <option value="">Crear cliente nuevo abajo</option>
@@ -76,6 +87,9 @@
                         </button>
                     </div>
                     @error('tipo')
+                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                    @error('familia')
                         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
                     <div class="mt-4 grid gap-4 sm:grid-cols-2">

@@ -1,0 +1,117 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Banco Core",
+        "description": "Web-session endpoints for Banco Core. The transfer endpoint uses Laravel web middleware and is not a token-based API.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/"
+        }
+    ],
+    "paths": {
+        "/accounts/transfer": {
+            "post": {
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Transfer funds between accounts",
+                "description": "Browser-facing POST route in Laravel's web middleware group. It requires an authenticated session and the manage-accounts permission. Submit a valid CSRF token in X-CSRF-TOKEN; do not disable CSRF protection. Validation failures and transfer failures redirect back with session errors, while committed transfers redirect to the source account.",
+                "operationId": "transferAccountFunds",
+                "parameters": [
+                    {
+                        "name": "X-CSRF-TOKEN",
+                        "in": "header",
+                        "description": "CSRF token for the current web session. Obtain it from the application's rendered CSRF token and send it using the header expected by Laravel's web middleware.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "source_account_id",
+                                    "destination_account_id",
+                                    "currency",
+                                    "amount",
+                                    "request_key"
+                                ],
+                                "properties": {
+                                    "source_account_id": {
+                                        "description": "Existing source account ID.",
+                                        "type": "integer",
+                                        "example": 12
+                                    },
+                                    "destination_account_id": {
+                                        "description": "Existing destination account ID; must differ from the source.",
+                                        "type": "integer",
+                                        "example": 24
+                                    },
+                                    "currency": {
+                                        "type": "string",
+                                        "example": "COP",
+                                        "enum": [
+                                            "COP",
+                                            "USD"
+                                        ]
+                                    },
+                                    "amount": {
+                                        "description": "Decimal string formatted with exactly two fractional digits; business rules may reject the amount.",
+                                        "type": "string",
+                                        "pattern": "^\\d+\\.\\d{2}$",
+                                        "example": "25.00"
+                                    },
+                                    "request_key": {
+                                        "description": "Idempotency request key.",
+                                        "type": "string",
+                                        "example": "transfer-request-123",
+                                        "maxLength": 255
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "302": {
+                        "description": "Browser redirect after a committed transfer, or back with validation/operation errors. Unauthenticated requests redirect to login."
+                    },
+                    "403": {
+                        "description": "Authenticated session lacks manage-accounts permission."
+                    },
+                    "419": {
+                        "description": "CSRF token is missing or invalid."
+                    }
+                },
+                "security": [
+                    {
+                        "sessionCookie": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "sessionCookie": {
+                "type": "apiKey",
+                "description": "Authenticated Laravel web session cookie (the default derived from APP_NAME); it may be overridden by SESSION_COOKIE. The user must also have the manage-accounts permission.",
+                "name": "sistema-bancario-core-session",
+                "in": "cookie"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Accounts",
+            "description": "Accounts"
+        }
+    ]
+}

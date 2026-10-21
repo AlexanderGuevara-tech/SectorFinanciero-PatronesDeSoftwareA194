@@ -70,7 +70,7 @@ class PeticionAbrirCuenta extends FormRequest
     {
         $validated = parent::validated();
 
-        if (! array_key_exists('customer_id', $validated) && $this->filled('customer_id')) {
+        if ($this->filled('customer_id')) {
             $validated['customer_id'] = (int) $this->input('customer_id');
         }
 

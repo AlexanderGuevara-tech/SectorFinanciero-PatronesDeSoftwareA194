@@ -40,8 +40,11 @@ class ControladorCuentas extends Controller
     {
         /** @var User $usuario */
         $usuario = auth()->user();
-        $customerId = (int) request()->query('cliente', 0);
-        $cuentas = $customerId > 0 ? $this->listarCuentas->ejecutar($customerId) : [];
+        $esAdministrador = $usuario->hasRole('administrator');
+        $customerId = $esAdministrador ? (int) request()->query('cliente', 0) : (int) $usuario->customer_id;
+        $cuentas = $esAdministrador && $customerId <= 0
+            ? $this->listarCuentas->ejecutarTodas()
+            : ($customerId > 0 ? $this->listarCuentas->ejecutar($customerId) : []);
 
         /** @var list<array{identificador: string, etiqueta: string, monedasElegibles: list<string>, politicaSobregiro: string}> $tiposCuenta */
         $tiposCuenta = array_map(
@@ -90,12 +93,44 @@ class ControladorCuentas extends Controller
                 'nombreRuta' => 'accounts.index',
                 'permiso' => 'view-accounts',
             ],
+            [
+                'identificador' => 'usuarios',
+                'etiqueta' => 'Usuarios',
+                'descripcion' => 'Gestión de usuarios del sistema',
+                'estado' => 'activo',
+                'nombreRuta' => 'admin.users.index',
+                'permiso' => 'manage-users',
+            ],
+            [
+                'identificador' => 'roles',
+                'etiqueta' => 'Roles',
+                'descripcion' => 'Gestión de roles y permisos',
+                'estado' => 'activo',
+                'nombreRuta' => 'admin.roles.index',
+                'permiso' => 'manage-users',
+            ],
+            [
+                'identificador' => 'clientes',
+                'etiqueta' => 'Clientes',
+                'descripcion' => 'Gestión de clientes bancarios',
+                'estado' => 'activo',
+                'nombreRuta' => 'admin.clientes.index',
+                'permiso' => 'manage-customers',
+            ],
+            [
+                'identificador' => 'adapters',
+                'etiqueta' => 'Adapter demo',
+                'descripcion' => 'Validaciones simuladas de transferencias',
+                'estado' => 'activo',
+                'nombreRuta' => 'admin.adapters.demo',
+                'permiso' => 'manage-accounts',
+            ],
         ];
 
         return view('accounts.index', [
             'navegacion' => $navegacion,
             'cuentas' => $cuentas,
-            'clientes' => $this->repositorioClientes->todos(),
+            'clientes' => $usuario->can('manage-accounts') ? $this->repositorioClientes->todos() : [],
             'clienteSeleccionado' => $customerId,
             'tiposCuenta' => $tiposCuenta,
             'evidenciaSingleton' => $evidenciaSingleton,
@@ -126,6 +161,7 @@ class ControladorCuentas extends Controller
             abort(404);
         }
 
+        $familia = $cuenta->familia();
         $cuenta = $this->consultarSaldo->ejecutar(
             cuentaId: $account,
             customerId: $cuenta->customerId(),
@@ -135,6 +171,7 @@ class ControladorCuentas extends Controller
             'cuentaId' => $account,
             'saldo' => $cuenta['saldo'],
             'moneda' => $cuenta['moneda'],
+            'familia' => $familia,
             'clienteNombre' => $this->repositorioCuentas->porId($account)?->cliente()?->nombre() ?? 'Sin cliente',
             'usuario' => $usuario->load('roles'),
             'navegacion' => $this->navegacionBasica(),
@@ -238,6 +275,22 @@ class ControladorCuentas extends Controller
                 'estado' => 'activo',
                 'nombreRuta' => 'admin.roles.index',
                 'permiso' => 'manage-users',
+            ],
+            [
+                'identificador' => 'clientes',
+                'etiqueta' => 'Clientes',
+                'descripcion' => 'Gestión de clientes bancarios',
+                'estado' => 'activo',
+                'nombreRuta' => 'admin.clientes.index',
+                'permiso' => 'manage-customers',
+            ],
+            [
+                'identificador' => 'adapters',
+                'etiqueta' => 'Adapter demo',
+                'descripcion' => 'Validaciones simuladas de transferencias',
+                'estado' => 'activo',
+                'nombreRuta' => 'admin.adapters.demo',
+                'permiso' => 'manage-accounts',
             ],
         ];
     }

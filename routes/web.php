@@ -3,6 +3,7 @@
 use App\Http\Controllers\ControladorAutenticacion;
 use App\Http\Controllers\ControladorClientes;
 use App\Http\Controllers\ControladorCuentas;
+use App\Http\Controllers\ControladorDemoAdapters;
 use App\Http\Controllers\ControladorPanel;
 use App\Http\Controllers\ControladorPrestamos;
 use App\Http\Controllers\ControladorRoles;
@@ -26,6 +27,7 @@ Route::middleware('auth')->group(function (): void {
     });
 
     Route::middleware('can:manage-accounts')->group(function (): void {
+        Route::get('/admin/adapters/demo', ControladorDemoAdapters::class)->name('admin.adapters.demo');
         Route::post('/accounts', [ControladorCuentas::class, 'store'])->name('accounts.store');
         Route::post('/accounts/{account}/block', [ControladorCuentas::class, 'block'])->name('accounts.block');
         Route::post('/accounts/{account}/unblock', [ControladorCuentas::class, 'unblock'])->name('accounts.unblock');
